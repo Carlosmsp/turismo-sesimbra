@@ -1552,10 +1552,7 @@ function iniciarAssistenteIA() {
         botaoEnviar.disabled = true;
 
         try {
-            const apiBase = window.location.origin === "http://127.0.0.1:5000" ||
-                window.location.origin === "http://localhost:5000"
-                ? ""
-                : "http://127.0.0.1:5000";
+            const apiBase = "";
 
             const resposta = await fetch(`${apiBase}/api/chatbot`, {
                 method: "POST",
