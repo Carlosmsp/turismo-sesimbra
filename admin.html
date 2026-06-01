@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Sesimbra</title>
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <link rel="stylesheet" href="assets/styles-final.css">
+    <style>
+        body { background: #f4f7fb; color: #0f2342; }
+        main { width: min(1180px, calc(100% - 2rem)); margin: 2rem auto; }
+        header { min-height: auto; padding: 2rem 5%; }
+        .admin-grid { display: grid; gap: 1.5rem; }
+        .admin-panel { background: #fff; border: 1px solid #dfe7ef; border-radius: 8px; padding: 1rem; box-shadow: 0 10px 24px rgba(15,35,66,0.08); }
+        .admin-panel h2 { margin-top: 0; }
+        .admin-status { margin-bottom: 1rem; font-weight: 700; }
+        .admin-table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+        th, td { padding: 0.65rem; border-bottom: 1px solid #e7edf4; text-align: left; vertical-align: top; }
+        th { background: #edf5fb; color: #0f2342; }
+        td pre { white-space: pre-wrap; margin: 0; font-family: inherit; max-width: 38rem; }
+        .admin-empty { color: #64748b; margin: 0.5rem 0 0; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Admin - Sesimbra</h1>
+        <p>Área técnica para consultar contactos e logs da API.</p>
+    </header>
+
+    <main>
+        <p id="adminStatus" class="admin-status">A carregar dados...</p>
+        <div class="admin-grid">
+            <section class="admin-panel">
+                <h2>Contactos</h2>
+                <div id="contactosTabela" class="admin-table-wrap"></div>
+            </section>
+
+            <section class="admin-panel">
+                <h2>Logs da IA</h2>
+                <div id="logsTabela" class="admin-table-wrap"></div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        (function () {
+            const token = new URLSearchParams(window.location.search).get("token") || "";
+            const status = document.getElementById("adminStatus");
+            const contactosTabela = document.getElementById("contactosTabela");
+            const logsTabela = document.getElementById("logsTabela");
+
+            function texto(valor) {
+                return String(valor ?? "")
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+
+            function tabelaContactos(contactos) {
+                if (!contactos.length) return '<p class="admin-empty">Ainda não há contactos guardados.</p>';
+
+                return `
+                    <table>
+                        <thead>
+                            <tr><th>ID</th><th>Nome</th><th>Email</th><th>Telefone</th><th>Mensagem</th><th>Data</th></tr>
+                        </thead>
+                        <tbody>
+                            ${contactos.map(c => `
+                                <tr>
+                                    <td>${texto(c.id)}</td>
+                                    <td>${texto(c.nome)}</td>
+                                    <td>${texto(c.email)}</td>
+                                    <td>${texto(c.telefone || "-")}</td>
+                                    <td><pre>${texto(c.mensagem)}</pre></td>
+                                    <td>${texto(c.criado_em)}</td>
+                                </tr>
+                            `).join("")}
+                        </tbody>
+                    </table>
+                `;
+            }
+
+            function tabelaLogs(logs) {
+                if (!logs.length) return '<p class="admin-empty">Ainda não há logs guardados.</p>';
+
+                return `
+                    <table>
+                        <thead>
+                            <tr><th>ID</th><th>Data</th><th>Endpoint</th><th>Estado</th><th>Resposta</th></tr>
+                        </thead>
+                        <tbody>
+                            ${logs.map(log => `
+                                <tr>
+                                    <td>${texto(log.id)}</td>
+                                    <td>${texto(log.created_at)}</td>
+                                    <td>${texto(log.endpoint)}</td>
+                                    <td>${texto(log.estado)}</td>
+                                    <td><pre>${texto(log.resposta_text || "")}</pre></td>
+                                </tr>
+                            `).join("")}
+                        </tbody>
+                    </table>
+                `;
+            }
+
+            async function carregar() {
+                if (!token) {
+                    status.textContent = "Token em falta no link.";
+                    return;
+                }
+
+                const [contactosResp, logsResp] = await Promise.all([
+                    fetch(`/api/admin/contactos?token=${encodeURIComponent(token)}`),
+                    fetch(`/api/logs?token=${encodeURIComponent(token)}`)
+                ]);
+
+                if (!contactosResp.ok || !logsResp.ok) {
+                    status.textContent = "Acesso não autorizado.";
+                    return;
+                }
+
+                const contactos = await contactosResp.json();
+                const logs = await logsResp.json();
+                contactosTabela.innerHTML = tabelaContactos(contactos);
+                logsTabela.innerHTML = tabelaLogs(logs);
+                status.textContent = "Dados carregados com sucesso.";
+            }
+
+            carregar().catch(function () {
+                status.textContent = "Não foi possível carregar os dados.";
+            });
+        }());
+    </script>
+</body>
+</html>

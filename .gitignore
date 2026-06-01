@@ -1,0 +1,8 @@
+.env
+__pycache__/
+*.pyc
+sesimbra_api_logs.db
+sesimbra_proweb.db
+contactos.db
+API_Log.db
+Projeto.db

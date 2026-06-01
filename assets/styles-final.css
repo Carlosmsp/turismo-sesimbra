@@ -1,0 +1,1272 @@
+/* ================================================
+   SESIMBRA — Guia de Viagem
+   ================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Jost:wght@300;400;500;600&display=swap');
+
+/* ================================
+   VARIÁVEIS
+================================ */
+:root {
+    --azul-profundo:   #0f2342;
+    --azul-oceano:     #1a5f8a;
+    --azul-ceu:        #4a9cc7;
+    --areia:           #f4ead3;
+    --branco-quente:   #fdfaf5;
+    --terracota:       #c4622d;
+    --ouro:            #c89a3e;
+    --texto:           #1e2d3d;
+    --texto-suave:     #4a5568;
+    --borda:           rgba(0,0,0,0.08);
+    --sombra:          0 4px 20px rgba(15,35,66,0.10);
+    --sombra-hover:    0 8px 32px rgba(15,35,66,0.18);
+    --radius:          10px;
+    --radius-lg:       16px;
+    --transicao:       0.3s ease;
+}
+
+.darkMode {
+    --azul-profundo:   #7ecfe8;
+    --azul-oceano:     #5ab4d4;
+    --azul-ceu:        #4a9cc7;
+    --areia:           #2a2015;
+    --branco-quente:   #141b24;
+    --terracota:       #e07848;
+    --ouro:            #d4a843;
+    --texto:           #e8e4dc;
+    --texto-suave:     #a0aab5;
+    --borda:           rgba(255,255,255,0.10);
+    --sombra:          0 4px 20px rgba(0,0,0,0.35);
+    --sombra-hover:    0 8px 32px rgba(0,0,0,0.50);
+    --iti-border-color: rgba(255,255,255,0.16);
+    --iti-country-selector-bg: #131d2b;
+    --iti-hover-color: #223149;
+    --iti-icon-color: #a0aab5;
+}
+
+/* ================================
+   RESET & BASE
+================================ */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+    font-family: 'Jost', sans-serif;
+    font-size: 16px;
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    width: 100%;
+    color: var(--texto);
+    background-color: var(--branco-quente);
+    background-image:
+        linear-gradient(rgba(253,250,245,0.83), rgba(253,250,245,0.83)),
+        url('../img/parque_natural_da_arrabia_2.jpg');
+    background-size: auto, cover;
+    background-attachment: scroll, fixed;
+    transition: background-color 0.4s, color 0.4s;
+}
+
+img {
+    max-width: 100%;
+    border-radius: var(--radius);
+    display: block;
+}
+
+/* ================================
+   TIPOGRAFIA
+================================ */
+h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.25rem 0;
+    color: #fff;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.3);
+}
+.hifen-normal {
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: 400;
+}
+
+h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 600;
+    color: var(--azul-profundo);
+    margin: 2.5rem 0 1rem;
+    position: relative;
+    padding-bottom: 0.5rem;
+}
+
+h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 48px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--terracota), var(--ouro));
+    border-radius: 2px;
+}
+
+h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--azul-oceano);
+    margin: 0 0 0.5rem;
+}
+
+p { line-height: 1.7; color: var(--texto-suave); }
+
+a { color: var(--azul-oceano); text-decoration: none; transition: color var(--transicao); }
+a:hover { color: var(--terracota); }
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible {
+    outline: 3px solid var(--ouro);
+    outline-offset: 3px;
+}
+
+/* ================================
+   HEADER
+================================ */
+header {
+    background:
+        linear-gradient(145deg, rgba(15,35,66,0.78) 0%, rgba(26,95,138,0.65) 55%, rgba(42,127,168,0.58) 100%),
+        url('../img/Castelo_Sesimbra_mar2.jpg') center/cover no-repeat;
+    padding: 2.5rem 5% 3.8rem;
+    position: relative;
+    overflow: hidden;
+}
+
+header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        radial-gradient(ellipse at 80% 20%, rgba(74,156,199,0.25) 0%, transparent 60%),
+        radial-gradient(ellipse at 10% 80%, rgba(200,154,62,0.15) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background:
+        linear-gradient(rgba(253,250,245,0.83), rgba(253,250,245,0.83)),
+        url('../img/parque_natural_da_arrabia_2.jpg') center/cover fixed;
+    clip-path: ellipse(55% 100% at 50% 100%);
+}
+
+header p {
+    color: rgba(255,255,255,0.82);
+    font-size: 1rem;
+    font-weight: 300;
+    letter-spacing: 0.03em;
+    margin: 0.25rem 0 1.5rem;
+    text-align: left;
+}
+
+.center { text-align: center; }
+
+#darkModeBotao {
+    position: absolute;
+    top: 1.25rem;
+    right: 5%;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    font-size: 1.1rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: var(--transicao);
+    z-index: 10;
+}
+#darkModeBotao:hover { background: rgba(255,255,255,0.28); transform: scale(1.08); }
+body.dark-botao-fixo #darkModeBotao {
+    position: fixed;
+    top: 0.46rem;
+    right: 1.25rem;
+    z-index: 250;
+    background: rgba(15, 35, 66, 0.94);
+    border-color: rgba(255,255,255,0.35);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.22);
+}
+body.darkMode.dark-botao-fixo #darkModeBotao {
+    background: rgba(7, 15, 28, 0.96);
+}
+
+/* ================================
+   NAVEGAÇÃO
+================================ */
+nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    margin-top: -60px;
+    background: rgba(15, 35, 66, 0.97);
+    backdrop-filter: blur(8px);
+    padding: 0.55rem 5%;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.22);
+    display: flex;
+    justify-content: center;
+}
+nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 auto;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+nav a {
+    display: inline-block;
+    border: 1.5px solid rgba(255,255,255,0.38);
+    border-radius: 50px;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.90);
+    text-decoration: none;
+    transition: var(--transicao);
+    background: rgba(255,255,255,0.08);
+}
+nav a:hover {
+    background: rgba(255,255,255,0.22);
+    border-color: rgba(255,255,255,0.70);
+    color: #fff;
+    transform: translateY(-1px);
+}
+nav a.ativo {
+    background: #fff;
+    border-color: #fff;
+    color: var(--azul-profundo);
+}
+
+.darkMode nav {
+    background: rgba(7, 15, 28, 0.97);
+}
+
+/* ================================
+   MAIN
+================================ */
+main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.5rem 5% 3rem;
+}
+
+section { margin-bottom: 2.5rem; }
+
+/* ================================
+   CARDS
+================================ */
+.card {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-top: 1.25rem;
+}
+
+.card article {
+    display: flex;
+    flex-direction: column;
+    background: var(--branco-quente);
+    border: 1px solid var(--borda);
+    border-radius: var(--radius-lg);
+    padding: 1.4rem;
+    flex: 1 1 270px;
+    min-width: 0;
+    box-shadow: var(--sombra);
+    transition: transform var(--transicao), box-shadow var(--transicao);
+    animation: fadeUp 0.5s ease both;
+    position: relative;
+    z-index: 0;
+}
+.card article:hover { transform: translateY(-5px); box-shadow: var(--sombra-hover); z-index: 1; }
+
+.card article img {
+    width: 100%;
+    height: 175px;
+    object-fit: cover;
+    margin-bottom: 0.85rem;
+    border-radius: var(--radius);
+}
+#gastroCard article img {
+    height: 210px;
+    object-position: center center;
+}
+
+.card-contact {
+    margin-top: 0.85rem;
+    font-size: 0.95rem;
+    color: var(--texto-suave);
+}
+.card-contact p {
+    margin: 0.25rem 0;
+}
+.card-contact a {
+    color: var(--azul-profundo);
+    text-decoration: none;
+}
+.card-contact a:hover {
+    text-decoration: underline;
+}
+
+.card article h3 { margin-bottom: 0.4rem; }
+
+.card article > a {
+    display: inline-block;
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--azul-oceano);
+    border-bottom: 1.5px solid var(--azul-ceu);
+    padding-bottom: 1px;
+}
+.card article > a:hover { color: var(--terracota); border-color: var(--terracota); }
+
+.card article ul { padding-left: 1.1rem; margin: 0.5rem 0 0; }
+.card article ul li { margin-bottom: 0.35rem; font-size: 0.9rem; }
+
+/* ================================
+   TABELA
+================================ */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.92rem;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--sombra);
+}
+thead { background: linear-gradient(90deg, var(--azul-profundo), var(--azul-oceano)); color: #fff; }
+thead th {
+    padding: 0.85rem 1rem;
+    text-align: left;
+    font-weight: 500;
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border: none;
+}
+tbody tr { border-bottom: 1px solid var(--borda); transition: background var(--transicao); }
+tbody tr:hover { background: var(--areia); }
+tbody td { padding: 0.75rem 1rem; border: none; color: var(--texto-suave); }
+tbody tr:nth-child(even) { background: rgba(244,234,211,0.3); }
+tbody tr:nth-child(even):hover { background: var(--areia); }
+
+/* ================================
+   DESTAQUE
+================================ */
+.destaque {
+    background: linear-gradient(135deg, #fff8e1, #fff3cd);
+    color: #7a4f00;
+    border-left: 4px solid var(--ouro);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 0.85rem 1rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin: 1rem 0;
+    line-height: 1.5;
+}
+
+.alert-popover {
+    position: relative;
+    display: inline-block;
+}
+
+.alert-popover .destaque {
+    cursor: help;
+}
+
+.eventos-popup {
+    display: none;
+    position: absolute;
+    left: 0;
+    top: 100%;
+    z-index: 9999;
+    min-width: 16rem;
+    max-width: 22rem;
+    margin-top: 0.65rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.97);
+    color: #5f4308;
+    border: 1px solid rgba(122, 79, 0, 0.18);
+    border-radius: 0.75rem;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+}
+
+.alert-popover:hover .eventos-popup {
+    display: block;
+}
+
+.eventos-popup h4 {
+    margin: 0 0 0.55rem;
+    font-size: 0.95rem;
+    color: #7a4f00;
+}
+
+.eventos-popup ul {
+    padding-left: 1rem;
+    margin: 0;
+}
+
+.eventos-popup li {
+    margin-bottom: 0.55rem;
+    font-size: 0.88rem;
+    line-height: 1.4;
+    color: #6d5520;
+}
+
+.eventos-popup li:last-child {
+    margin-bottom: 0;
+}
+
+/* ================================
+   GRELHA
+================================ */
+.grelha { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+.grelha figure { margin: 0; }
+
+/* ================================
+   INPUTS
+================================ */
+input[type="text"],
+input[type="email"],
+textarea {
+    width: 100%;
+    padding: 0.65rem 1rem;
+    border: 1.5px solid var(--borda);
+    border-radius: var(--radius);
+    font-family: 'Jost', sans-serif;
+    font-size: 0.95rem;
+    color: var(--texto);
+    background: var(--branco-quente);
+    transition: border-color var(--transicao), box-shadow var(--transicao);
+    outline: none;
+}
+input[type="text"]:focus,
+input[type="email"]:focus,
+textarea:focus {
+    border-color: var(--azul-oceano);
+    box-shadow: 0 0 0 3px rgba(26,95,138,0.12);
+}
+label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 500;
+    margin-bottom: 0.3rem;
+    margin-top: 1rem;
+    color: var(--texto);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ================================
+   FORMULÁRIO
+================================ */
+#formularioContacto {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    max-width: 1000px;
+    width: 100%;
+    background: var(--branco-quente);
+    border: 1px solid var(--borda);
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+    box-shadow: var(--sombra);
+}
+
+.campo-obrigatorio {
+    color: #c0392b;
+    font-weight: 800;
+}
+
+#formularioContacto input[type="text"],
+#formularioContacto input[type="email"],
+#formularioContacto input[type="tel"],
+#formularioContacto select,
+#formularioContacto textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--borda);
+    border-radius: 6px;
+    background: var(--branco-quente);
+}
+.iti {
+    width: 100%;
+}
+.iti__country-container {
+    color: var(--texto);
+}
+.iti__dropdown-content,
+.iti__country-list {
+    width: 330px !important;
+    min-width: 330px !important;
+    max-width: calc(100vw - 2rem) !important;
+    max-height: 260px !important;
+    border-color: var(--borda);
+    border-radius: 8px;
+    box-shadow: var(--sombra-hover);
+}
+.iti__dropdown-content {
+    overflow: hidden;
+}
+.iti__country-list {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+}
+.iti__country-list::-webkit-scrollbar {
+    width: 10px;
+}
+.iti__country-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+.iti__country-list::-webkit-scrollbar-thumb {
+    background: rgba(15,35,66,0.28);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+.iti__country-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(15,35,66,0.42);
+    background-clip: padding-box;
+}
+.iti__search-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.55rem 0.75rem 0.55rem 2.1rem;
+    font-family: 'Jost', sans-serif;
+}
+.iti__search-input::placeholder {
+    color: transparent;
+}
+#formularioContacto input.campo-invalido,
+#formularioContacto textarea.campo-invalido {
+    border-color: #d76a62;
+    outline: 1px solid rgba(215, 106, 98, 0.75);
+    outline-offset: 1px;
+    box-shadow: 0 0 0 3px rgba(215, 106, 98, 0.12);
+}
+.campo-erro-msg {
+    display: none;
+    width: fit-content;
+    margin-top: -0.15rem;
+    padding: 0.45rem 0.65rem;
+    border-radius: 6px;
+    background: #222;
+    color: #fff;
+    font-size: 0.78rem;
+    line-height: 1.3;
+}
+.campo-erro-msg.visivel {
+    display: inline-block;
+}
+
+#formularioContacto textarea { height: 150px; resize: vertical; }
+
+@media (max-width: 800px) {
+    #formularioContacto { padding: 1rem; }
+}
+.mapaContacto {
+    flex: 1;
+    min-width: 320px;
+    background: var(--branco-quente);
+    border: 1px solid var(--borda);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--sombra);
+}
+.mapaContacto h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.15rem;
+}
+.contact-content {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+.mapaFrame {
+    width: 100%;
+    height: 320px;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--borda);
+    margin-bottom: 1rem;
+}
+.mapaFrame iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+#inputMensagem { height: 30px; resize: vertical; }
+#formularioContacto p { font-size: 0.78rem; color: var(--texto-suave); margin: 0.2rem 0 0.5rem; line-height: 1.4; }
+
+button[type="submit"], #botaoSubmit {
+    margin-top: 1.25rem;
+    padding: 0.75rem 2rem;
+    background: linear-gradient(135deg, var(--azul-oceano), var(--azul-profundo));
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: var(--transicao);
+    align-self: flex-start;
+}
+.card-link {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, var(--azul-oceano), var(--azul-profundo));
+    color: #fff;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 700;
+    transition: var(--transicao);
+}
+.card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: auto;
+    justify-content: flex-start;
+    align-items: flex-end;
+}
+.card-actions .card-link {
+    white-space: nowrap;
+}
+.card-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(26,95,138,0.24);
+}
+button[type="submit"]:hover, #botaoSubmit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(26,95,138,0.35);
+}
+
+#respostaValidacao {
+    margin: 0.15rem 0 0.75rem;
+    padding: 0.55rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border: 1px solid;
+    text-align: center;
+}
+#respostaValidacao:empty {
+    display: none;
+}
+#respostaValidacao.erro {
+    background-color: #ffebee;
+    color: #c0392b;
+    border-color: #c0392b;
+}
+#respostaValidacao.erro ul { margin: 0; padding-left: 0; list-style: none; color: #c0392b; }
+#respostaValidacao.a-enviar {
+    background-color: #e8f4fb;
+    color: #0f5f82;
+    border-color: #5cc4e0;
+}
+#respostaValidacao.sucesso {
+    background-color: #e8f5e9;
+    color: #146c2e;
+    border-color: #27ae60;
+}
+#respostaValidacao ul { margin: 0; padding-left: 1.2rem; }
+
+.server-status {
+    margin: 0.75rem 0 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius);
+    font-weight: 500;
+    border: 1px solid transparent;
+}
+.server-status.server-ok {
+    background: rgba(39, 174, 96, 0.12);
+    color: #27ae60;
+    border-color: #27ae60;
+}
+.server-status.server-error {
+    background: rgba(192, 57, 43, 0.12);
+    color: #c0392b;
+    border-color: #c0392b;
+}
+
+/* ================================
+   FOOTER
+================================ */
+footer {
+    background: #0f2342;
+    color: rgba(255,255,255,0.60);
+    text-align: center;
+    padding: 1.75rem 5%;
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
+    margin-top: 3rem;
+}
+footer p { margin: 0; color: rgba(255,255,255,0.60); line-height: 1.5; }
+
+/* ================================
+   ANIMAÇÕES
+================================ */
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.card article:nth-child(1) { animation-delay: 0.05s; }
+.card article:nth-child(2) { animation-delay: 0.10s; }
+.card article:nth-child(3) { animation-delay: 0.15s; }
+.card article:nth-child(4) { animation-delay: 0.20s; }
+.card article:nth-child(5) { animation-delay: 0.25s; }
+.card article:nth-child(6) { animation-delay: 0.30s; }
+.card article:nth-child(7) { animation-delay: 0.35s; }
+.card article:nth-child(8) { animation-delay: 0.40s; }
+
+/* ================================
+   RESPONSIVIDADE
+================================ */
+@media (max-width: 768px) {
+    header { padding: 2rem 5% 3rem; }
+    .grelha { grid-template-columns: repeat(2, 1fr); }
+    table { font-size: 0.82rem; }
+    tbody td, thead th { padding: 0.6rem 0.7rem; }
+    .card-actions { justify-content: center; }
+    .card-actions .card-link { flex: 1 1 calc(50% - 0.75rem); min-width: 140px; }
+}
+
+@media (max-width: 600px) {
+    nav ul { gap: 0.35rem; }
+    nav a { font-size: 0.72rem; padding: 0.3rem 0.65rem; }
+    .card { display: block; }
+    .card article { margin-bottom: 1rem; }
+    .grelha { grid-template-columns: 1fr; }
+    #formularioContacto { padding: 1.25rem; }
+    .iti__dropdown-content,
+    .iti__country-list {
+        width: min(320px, calc(100vw - 2rem)) !important;
+        min-width: 0 !important;
+    }
+}
+
+/* ================================
+   DARK MODE — AJUSTES
+================================ */
+.darkMode header {
+    background:
+        linear-gradient(145deg, rgba(7,15,28,0.88) 0%, rgba(15,42,64,0.82) 55%, rgba(22,56,80,0.78) 100%),
+        url('../img/Castelo_Sesimbra_mar2.jpg') center/cover no-repeat;
+}
+.darkMode header::after {
+    background:
+        linear-gradient(rgba(20,27,36,0.88), rgba(20,27,36,0.88)),
+        url('../img/parque_natural_da_arrabia_2.jpg') center/cover fixed;
+}
+.darkMode .card article { background: #1b2535; }
+.darkMode table thead { background: linear-gradient(90deg, #070f1c, #163850); }
+.darkMode tbody tr:nth-child(even) { background: rgba(255,255,255,0.04); }
+.darkMode tbody tr:hover { background: rgba(255,255,255,0.07); }
+.darkMode .destaque { background: linear-gradient(135deg, #2c220a, #3a2d0e); color: #f0c060; border-left-color: var(--ouro); }
+.darkMode .eventos-popup {
+    background: #141b24;
+    color: #e8d8a8;
+    border-color: rgba(212,168,67,0.35);
+    box-shadow: 0 16px 36px rgba(0,0,0,0.58);
+}
+.darkMode .eventos-popup h4 {
+    color: #f0c060;
+}
+.darkMode .eventos-popup li {
+    color: #d8cfbc;
+}
+.darkMode .eventos-popup strong {
+    color: #f3d37a;
+}
+.darkMode #formularioContacto { background: #1b2535; }
+.darkMode input[type="text"], .darkMode input[type="email"], .darkMode textarea {
+    background: #131d2b; color: var(--texto); border-color: rgba(255,255,255,0.12);
+}
+.darkMode #formularioContacto select,
+.darkMode #formularioContacto input[type="tel"] {
+    background: #131d2b; color: var(--texto); border-color: rgba(255,255,255,0.12);
+}
+.darkMode .iti__dropdown-content,
+.darkMode .iti__country-list,
+.darkMode .iti__search-input {
+    background: #131d2b;
+    color: var(--texto);
+    border-color: rgba(255,255,255,0.12);
+}
+.darkMode .iti__dropdown-content {
+    background: #131d2b !important;
+    border-color: rgba(255,255,255,0.12) !important;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.55);
+}
+.darkMode .iti__search-input {
+    background: #131d2b !important;
+    border-bottom-color: rgba(255,255,255,0.16);
+}
+.darkMode .iti__country-list {
+    background: #131d2b !important;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.55);
+    scrollbar-color: rgba(255,255,255,0.35) transparent;
+}
+.darkMode .iti__country-list::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.32);
+    background-clip: padding-box;
+}
+.darkMode .iti__country-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.46);
+    background-clip: padding-box;
+}
+.darkMode .iti__country {
+    color: var(--texto);
+}
+.darkMode .iti__country .iti__dial-code,
+.darkMode .iti__selected-dial-code {
+    color: var(--texto-suave);
+}
+.darkMode .iti__country.iti__highlight .iti__dial-code,
+.darkMode .iti__country:hover .iti__dial-code {
+    color: #dce8f3;
+}
+.darkMode .iti__country:hover,
+.darkMode .iti__highlight {
+    background: #223149;
+    color: #fff;
+}
+.darkMode .iti__selected-country,
+.darkMode .iti__selected-country:hover {
+    background: #131d2b;
+    color: var(--texto);
+}
+.darkMode input[type="text"]:focus, .darkMode input[type="email"]:focus, .darkMode textarea:focus {
+    border-color: var(--azul-ceu); box-shadow: 0 0 0 3px rgba(74,156,199,0.15);
+}
+.darkMode #formularioContacto input.campo-invalido {
+    border-color: #f08a82;
+    outline: 1px solid rgba(240, 138, 130, 0.75);
+    outline-offset: 1px;
+    box-shadow: 0 0 0 3px rgba(240, 138, 130, 0.14);
+}
+.darkMode .campo-erro-msg {
+    background: #05070a;
+}
+.darkMode footer { background: #070f1c; }
+body.darkMode {
+    background-image:
+        linear-gradient(rgba(20,27,36,0.88), rgba(20,27,36,0.88)),
+        url('../img/parque_natural_da_arrabia_2.jpg');
+}
+
+/* ================================
+   OVERLAY DE IMAGEM
+================================ */
+.overlay {
+    position: fixed;                            /*Fica preso no ecra inteiro*/
+    top: 0;
+    left: 0;                                    /*Começa no canto superior esquerdo*/
+    width: 100%;    
+    height: 100%;                               /*Ecra inteiro*/
+    background-color: rgba(0, 0, 0, 0.85);
+    display: flex;                              /*Flex*/
+    justify-content: center;                    /*Aparece no meio horizontal*/
+    align-items: center;                        /*E na vertical*/
+    z-index: 9999;                              /*Fica acima de tudo*/
+    cursor: pointer;                            /*Mostra o cursor clicavel (A mão a apontar) */
+}
+
+.overlay-img {
+    max-width: 90%;
+    max-height: 90%;                            /*Para nao ocupar o ecra inteiro*/
+    border-radius: 10px;
+}
+
+/* ================================
+   FILTROS DE ATIVIDADES
+================================ */
+.atividades-filtros {
+    margin-bottom: 1.5rem;
+    padding: 1.25rem 1.5rem;
+    background: var(--branco-quente);
+    border: 1px solid var(--borda);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--sombra);
+}
+
+.filtro-pesquisa {
+    margin-bottom: 1rem;
+}
+
+.filtro-pesquisa input {
+    max-width: 420px;
+}
+
+.filtro-categorias {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+}
+
+.btn-categoria {
+    padding: 0.38rem 1.1rem;
+    border-radius: 50px;
+    border: 1.5px solid var(--borda);
+    background: transparent;
+    color: var(--texto-suave);
+    font-family: 'Jost', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: var(--transicao);
+}
+
+.btn-categoria:hover {
+    border-color: var(--azul-oceano);
+    color: var(--azul-oceano);
+}
+
+.btn-categoria.ativo {
+    background: var(--azul-oceano);
+    color: #fff;
+    border-color: var(--azul-oceano);
+}
+
+.filtro-resultado {
+    font-size: 0.82rem;
+    color: var(--texto-suave);
+    margin: 0;
+}
+
+/* ================================
+   CARDS DE ATIVIDADES — INTERATIVOS
+================================ */
+.atividade-icone {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 0.6rem;
+    line-height: 1;
+}
+
+.atividade-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.atividade-header h3 { margin: 0; }
+
+.categoria-badge {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    padding: 0.18rem 0.6rem;
+    border-radius: 50px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+}
+
+.categoria-agua     { background: rgba(26,95,138,0.12);  color: var(--azul-oceano); }
+.categoria-natureza { background: rgba(34,120,34,0.12);  color: #2d7a2d; }
+.categoria-aventura { background: rgba(196,98,45,0.12);  color: var(--terracota); }
+.categoria-cultura  { background: rgba(200,154,62,0.15); color: #a07c1a; }
+
+.sem-resultados {
+    text-align: center;
+    color: var(--texto-suave);
+    padding: 2.5rem;
+    width: 100%;
+    font-size: 0.95rem;
+}
+
+/* dark mode — filtros */
+.darkMode .atividades-filtros { background: #1b2535; }
+.darkMode .btn-categoria { color: var(--texto-suave); border-color: rgba(255,255,255,0.15); }
+.darkMode .btn-categoria:hover { border-color: var(--azul-ceu); color: var(--azul-ceu); }
+.darkMode .btn-categoria.ativo { background: var(--azul-oceano); color: #fff; border-color: var(--azul-oceano); }
+.darkMode .categoria-natureza { color: #5cb85c; background: rgba(92,184,92,0.12); }
+.darkMode .categoria-cultura  { color: var(--ouro); background: rgba(200,154,62,0.12); }
+
+/* ================================
+   ASSISTENTE IA
+================================ */
+.assistente-ia {
+    position: fixed;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    z-index: 5000;
+    font-family: 'Jost', sans-serif;
+    width: 3.6rem;
+    height: 3.6rem;
+}
+
+.assistente-painel.arrastando {
+    user-select: none;
+}
+
+.assistente-toggle {
+    width: 3.6rem;
+    height: 3.6rem;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.85);
+    background: var(--azul-oceano);
+    color: #fff;
+    box-shadow: var(--sombra-hover);
+    font-size: 1.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transicao);
+}
+
+.assistente-toggle:hover {
+    background: var(--terracota);
+    transform: translateY(-2px);
+}
+
+.assistente-painel {
+    position: fixed;
+    right: 1.25rem;
+    bottom: 5.6rem;
+    width: min(430px, calc(100vw - 2.5rem));
+    height: min(680px, calc(100vh - 6rem));
+    max-height: min(680px, calc(100vh - 6rem));
+    display: none;
+    grid-template-rows: auto 1fr auto;
+    overflow: hidden;
+    background: var(--branco-quente);
+    color: var(--texto);
+    border: 1px solid var(--borda);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--sombra-hover);
+}
+
+.assistente-ia.aberto .assistente-painel {
+    display: grid;
+}
+
+.assistente-topo {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 1rem;
+    background: var(--azul-profundo);
+    cursor: move;
+    touch-action: none;
+}
+
+.assistente-topo h2 {
+    margin: 0;
+    padding: 0;
+    color: #fff;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.assistente-topo h2::after {
+    display: none;
+}
+
+.assistente-topo p {
+    margin: 0.3rem 0 0;
+    color: rgba(255,255,255,0.78);
+    font-size: 0.82rem;
+    line-height: 1.4;
+}
+
+.assistente-acoes {
+    display: flex;
+    gap: 0.35rem;
+    flex-shrink: 0;
+    align-items: center;
+}
+
+.assistente-minimizar,
+.assistente-fechar {
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid rgba(255,255,255,0.22);
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    cursor: pointer;
+    font-size: 1.2rem;
+    line-height: 1;
+    transition: var(--transicao);
+}
+
+.assistente-minimizar:hover,
+.assistente-fechar:hover {
+    background: rgba(255,255,255,0.22);
+}
+
+.assistente-mensagens {
+    padding: 1rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    min-height: 0;
+}
+
+.assistente-msg {
+    width: fit-content;
+    max-width: 96%;
+    margin: 0;
+    padding: 0.7rem 0.85rem;
+    border-radius: var(--radius);
+    line-height: 1.5;
+    font-size: 0.92rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.assistente-bot {
+    background: rgba(26,95,138,0.10);
+    color: var(--texto);
+}
+
+.assistente-user {
+    align-self: flex-end;
+    background: var(--azul-oceano);
+    color: #fff;
+}
+
+.assistente-form {
+    border-top: 1px solid var(--borda);
+    padding: 0.8rem;
+    display: grid;
+    gap: 0.55rem;
+}
+
+.assistente-form-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.assistente-form label {
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--azul-profundo);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.assistente-limpar {
+    width: 2rem;
+    height: 2rem;
+    min-width: 2rem;  /* ← adiciona */
+    border: 1px solid rgba(74,156,199,0.35);
+    border-radius: 50%;
+    background: rgba(74,156,199,0.08);
+    color: var(--azul-oceano);
+    cursor: pointer;
+    transition: var(--transicao);
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    font-weight: 600;
+    line-height: 1;
+    padding: 0;
+}
+
+.assistente-limpar:hover {
+    background: rgba(74,156,199,0.18);
+    border-color: var(--azul-ceu);
+    color: var(--azul-profundo);
+}
+
+.assistente-form textarea {
+    min-height: 72px;
+    max-height: 145px;
+    resize: vertical;
+}
+
+.assistente-form button[type="submit"] {
+    width: 100%;
+}
+
+.darkMode .assistente-painel {
+    background: #1b2535;
+}
+
+.darkMode .assistente-topo {
+    background: #7ecfe8;
+}
+
+.darkMode .assistente-topo h2,
+.darkMode .assistente-topo p {
+    color: #07131f;
+}
+
+.darkMode .assistente-minimizar,
+.darkMode .assistente-fechar {
+    border-color: rgba(7,19,31,0.25);
+    background: rgba(7,19,31,0.08);
+    color: #07131f;
+}
+
+.darkMode .assistente-minimizar:hover,
+.darkMode .assistente-fechar:hover {
+    background: rgba(7,19,31,0.16);
+}
+
+.darkMode .assistente-limpar {
+    border-color: rgba(126,207,232,0.30);
+    background: rgba(126,207,232,0.08);
+    color: var(--azul-profundo);
+}
+
+.darkMode .assistente-limpar:hover {
+    background: rgba(126,207,232,0.18);
+    color: var(--azul-profundo);
+}
+
+.darkMode .assistente-bot {
+    background: rgba(255,255,255,0.06);
+    color: var(--texto);
+}
+
+@media (max-width: 560px) {
+    .assistente-ia {
+        right: 0.85rem;
+        bottom: 0.85rem;
+    }
+}
