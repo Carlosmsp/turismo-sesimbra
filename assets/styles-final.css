@@ -959,6 +959,33 @@ body.darkMode {
     margin-top: 0.25rem;
     padding-top: 0.25rem;
 }
+.rota-sugestao {
+    margin-top: 0.75rem;
+    background: rgba(26,95,138,0.08);
+    border-radius: var(--radius);
+    padding: 0.65rem 0.75rem;
+    font-size: 0.8rem;
+}
+.rota-sugestao-texto {
+    margin: 0 0 0.5rem;
+    color: var(--azul-oceano);
+    font-weight: 500;
+    line-height: 1.4;
+}
+.rota-sugestao-botoes { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.btn-aceitar-rota, .btn-rejeitar-rota {
+    padding: 0.3rem 0.8rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transicao);
+    font-family: 'Jost', sans-serif;
+}
+.btn-aceitar-rota { background: var(--azul-oceano); color: #fff; border: none; }
+.btn-aceitar-rota:hover { background: var(--azul-profundo); }
+.btn-rejeitar-rota { background: transparent; border: 1.5px solid var(--borda); color: var(--texto-suave); }
+.btn-rejeitar-rota:hover { border-color: var(--texto-suave); }
 
 .overlay-img {
     max-width: 90%;

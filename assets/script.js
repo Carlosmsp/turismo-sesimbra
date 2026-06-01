@@ -1576,17 +1576,42 @@ function iniciarAssistenteIA() {
 
             const pontosMapa = extrairPontosDoTexto(dados.resposta);
             if (pontosMapa.length >= 2) {
-                const urlMaps = construirUrlGoogleMaps(pontosMapa);
+                const pontosOtimizados = otimizarRota(pontosMapa);
+                const rotaMudou = !rotasIguais(pontosMapa, pontosOtimizados);
+                const urlOriginal = construirUrlGoogleMaps(pontosMapa);
+                const urlOtimizada = construirUrlGoogleMaps(pontosOtimizados);
+
                 estado.appendChild(criarResumoCustos(pontosMapa));
+
                 const wrapper = document.createElement("div");
                 wrapper.className = "botao-navegar-wrapper";
                 const botaoNav = document.createElement("a");
-                botaoNav.href = urlMaps;
+                botaoNav.href = urlOriginal;
                 botaoNav.target = "_blank";
                 botaoNav.rel = "noopener noreferrer";
                 botaoNav.className = "botao-navegar";
                 botaoNav.textContent = "Navegar no Google Maps";
                 wrapper.appendChild(botaoNav);
+
+                if (rotaMudou) {
+                    const sugestao = document.createElement("div");
+                    sugestao.className = "rota-sugestao";
+                    sugestao.innerHTML = `
+                        <p class="rota-sugestao-texto">🔄 Rota mais curta: ${pontosOtimizados.map(p => p.nome).join(" → ")}</p>
+                        <div class="rota-sugestao-botoes">
+                            <button class="btn-aceitar-rota">✓ Aceitar rota otimizada</button>
+                            <button class="btn-rejeitar-rota">✗ Manter ordem original</button>
+                        </div>`;
+                    sugestao.querySelector(".btn-aceitar-rota").addEventListener("click", () => {
+                        botaoNav.href = urlOtimizada;
+                        sugestao.remove();
+                    });
+                    sugestao.querySelector(".btn-rejeitar-rota").addEventListener("click", () => {
+                        sugestao.remove();
+                    });
+                    estado.appendChild(sugestao);
+                }
+
                 estado.appendChild(wrapper);
             }
 
@@ -1658,6 +1683,27 @@ function calcularDistanciaKm(c1, c2) {
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function otimizarRota(pontos) {
+    if (pontos.length <= 2) return pontos;
+    const restantes = [...pontos];
+    const otimizados = [restantes.shift()];
+    while (restantes.length > 0) {
+        const ultimo = otimizados[otimizados.length - 1];
+        let menorIdx = 0;
+        let menorDist = Infinity;
+        restantes.forEach((p, i) => {
+            const d = calcularDistanciaKm(ultimo.coords, p.coords);
+            if (d < menorDist) { menorDist = d; menorIdx = i; }
+        });
+        otimizados.push(restantes.splice(menorIdx, 1)[0]);
+    }
+    return otimizados;
+}
+
+function rotasIguais(r1, r2) {
+    return r1.map(p => p.nome).join() === r2.map(p => p.nome).join();
 }
 
 function criarResumoCustos(pontos) {
