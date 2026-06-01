@@ -905,16 +905,20 @@ body.darkMode {
 }
 
 /* ================================
-   BOTÃO NAVEGAR (CHATBOT)
+   BOTÃO NAVEGAR + CUSTOS (CHATBOT)
 ================================ */
+.botao-navegar-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.5rem;
+}
 .botao-navegar {
     display: inline-block;
-    margin-top: 0.85rem;
-    padding: 0.5rem 1.2rem;
+    padding: 0.45rem 1.1rem;
     background: #1a73e8;
     color: #fff !important;
     border-radius: 50px;
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     font-weight: 600;
     letter-spacing: 0.03em;
     text-decoration: none;
@@ -925,6 +929,35 @@ body.darkMode {
     background: #1557b0;
     color: #fff !important;
     transform: translateY(-1px);
+}
+.custo-resumo {
+    margin-top: 0.85rem;
+    border-top: 1px solid var(--borda);
+    padding-top: 0.6rem;
+    font-size: 0.8rem;
+}
+.custo-titulo {
+    font-weight: 600;
+    color: var(--azul-oceano);
+    margin: 0 0 0.4rem;
+    font-size: 0.8rem;
+}
+.custo-linha {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.18rem 0;
+    color: var(--texto-suave);
+}
+.custo-ou {
+    opacity: 0.7;
+    font-style: italic;
+}
+.custo-total {
+    font-weight: 600;
+    color: var(--texto);
+    border-top: 1px solid var(--borda);
+    margin-top: 0.25rem;
+    padding-top: 0.25rem;
 }
 
 .overlay-img {

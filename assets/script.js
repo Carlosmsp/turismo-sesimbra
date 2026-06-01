@@ -1577,13 +1577,17 @@ function iniciarAssistenteIA() {
             const pontosMapa = extrairPontosDoTexto(dados.resposta);
             if (pontosMapa.length >= 2) {
                 const urlMaps = construirUrlGoogleMaps(pontosMapa);
+                estado.appendChild(criarResumoCustos(pontosMapa));
+                const wrapper = document.createElement("div");
+                wrapper.className = "botao-navegar-wrapper";
                 const botaoNav = document.createElement("a");
                 botaoNav.href = urlMaps;
                 botaoNav.target = "_blank";
                 botaoNav.rel = "noopener noreferrer";
                 botaoNav.className = "botao-navegar";
                 botaoNav.textContent = "Navegar no Google Maps";
-                estado.appendChild(botaoNav);
+                wrapper.appendChild(botaoNav);
+                estado.appendChild(wrapper);
             }
 
             guardarEstadoAssistente();
@@ -1644,6 +1648,43 @@ function extrairPontosDoTexto(texto) {
 function construirUrlGoogleMaps(pontos) {
     const waypoints = pontos.map(p => p.coords).join("/");
     return "https://www.google.com/maps/dir/" + waypoints;
+}
+
+function calcularDistanciaKm(c1, c2) {
+    const [lat1, lon1] = c1.split(",").map(Number);
+    const [lat2, lon2] = c2.split(",").map(Number);
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function criarResumoCustos(pontos) {
+    const SESIMBRA = "38.4438,-9.1052";
+    const todos = [SESIMBRA, ...pontos.map(p => p.coords)];
+    let distKm = 0;
+    for (let i = 0; i < todos.length - 1; i++) distKm += calcularDistanciaKm(todos[i], todos[i+1]);
+    distKm = Math.round(distKm * 1.3);
+
+    const combustivel = Math.round(distKm * 0.08 * 1.75 * 10) / 10;
+    const transportePublico = Math.max(4, pontos.length * 2);
+    const almoco = 18;
+    const bilhetes = 0;
+    const totalCarro = Math.round(combustivel + almoco + bilhetes);
+    const totalTransporte = Math.round(transportePublico + almoco + bilhetes);
+
+    const div = document.createElement("div");
+    div.className = "custo-resumo";
+    div.innerHTML = `
+        <p class="custo-titulo">Custos estimados por pessoa</p>
+        <div class="custo-linha"><span>🚗 Combustível (~${distKm} km)</span><span>~${combustivel}€</span></div>
+        <div class="custo-linha custo-ou"><span>🚌 Transporte público</span><span>~${transportePublico}€</span></div>
+        <div class="custo-linha"><span>🍽️ Almoço</span><span>~${almoco}€</span></div>
+        <div class="custo-linha custo-total"><span>Total (carro + almoço)</span><span>~${totalCarro}€</span></div>
+        <div class="custo-linha custo-total"><span>Total (transporte + almoço)</span><span>~${totalTransporte}€</span></div>
+    `;
+    return div;
 }
 
 carregarDarkMode();             // Chamar a funçao ao carregar a pagina
