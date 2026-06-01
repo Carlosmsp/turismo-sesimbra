@@ -1573,6 +1573,19 @@ function iniciarAssistenteIA() {
 
             estado.innerHTML = formatarMensagemAssistente(dados.resposta);
             estado.dataset.texto = dados.resposta;
+
+            const pontosMapa = extrairPontosDoTexto(dados.resposta);
+            if (pontosMapa.length >= 2) {
+                const urlMaps = construirUrlGoogleMaps(pontosMapa);
+                const botaoNav = document.createElement("a");
+                botaoNav.href = urlMaps;
+                botaoNav.target = "_blank";
+                botaoNav.rel = "noopener noreferrer";
+                botaoNav.className = "botao-navegar";
+                botaoNav.textContent = "Navegar no Google Maps";
+                estado.appendChild(botaoNav);
+            }
+
             guardarEstadoAssistente();
         }
         catch (erro) {
@@ -1602,6 +1615,37 @@ function atualizarInterface() {
     aplicarFiltros();
     addPontosTuristicos();
 }
+const PONTOS_GPS = {
+    "Praia do Ouro":               "38.4438,-9.1052",
+    "Castelo de Sesimbra":         "38.4517,-9.0973",
+    "Porto de Abrigo":             "38.4364,-9.1163",
+    "Praia da Ribeira do Cavalo":  "38.4297,-9.1139",
+    "Cabo Espichel":               "38.4190,-9.2146",
+    "Parque Natural da Arrábida":  "38.4836,-9.0274",
+    "Arrábida":                    "38.4836,-9.0274",
+    "Lagoa de Albufeira":          "38.5116,-9.1785",
+    "Praia da Califórnia":         "38.4414,-9.1005",
+    "Pegadas de Dinossauros":      "38.4243,-9.2065",
+    "Forte de Santiago":           "38.4441,-9.1005",
+    "Praia do Meco":               "38.3956,-9.0361",
+};
+
+function extrairPontosDoTexto(texto) {
+    const encontrados = [];
+    const textoLower = texto.toLowerCase();
+    for (const [nome, coords] of Object.entries(PONTOS_GPS)) {
+        if (textoLower.includes(nome.toLowerCase()) && !encontrados.find(p => p.coords === coords)) {
+            encontrados.push({ nome, coords });
+        }
+    }
+    return encontrados;
+}
+
+function construirUrlGoogleMaps(pontos) {
+    const waypoints = pontos.map(p => p.coords).join("/");
+    return "https://www.google.com/maps/dir/" + waypoints;
+}
+
 carregarDarkMode();             // Chamar a funçao ao carregar a pagina
 addNavLinks();                   // Funçao para adicionar o nav
 atualizarPosicaoBotaoDarkMode();
