@@ -7,8 +7,11 @@ import re
 import secrets
 import sqlite3
 import time
+import smtplib
 from collections import defaultdict, deque
 from datetime import datetime
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from pathlib import Path
 from urllib.error import URLError
 from urllib.parse import urlencode
@@ -1175,6 +1178,76 @@ def api_admin_contactos():
     return jsonify([dict(contacto) for contacto in contactos])
 
 
+@app.post("/api/admin/contactos/<int:cid>/responder")
+def api_admin_responder_contacto(cid):
+    if not validar_admin_token():
+        return jsonify({"erro": "Acesso não autorizado."}), 401
+
+    dados = request.get_json(silent=True) or {}
+    assunto = str(dados.get("assunto", "")).strip()
+    mensagem_resposta = str(dados.get("mensagem", "")).strip()
+
+    if not assunto or not mensagem_resposta:
+        return jsonify({"erro": "Assunto e mensagem são obrigatórios."}), 400
+
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.row_factory = sqlite3.Row
+            contacto = conn.execute(
+                "SELECT email, nome FROM contactos WHERE id = ?",
+                (cid,),
+            ).fetchone()
+            if not contacto:
+                return jsonify({"erro": "Contacto não encontrado."}), 404
+
+        email_destinatario = contacto["email"]
+        nome_destinatario = contacto["nome"]
+        email_remetente = os.environ.get("EMAIL_ADMIN", "noreply@sesimbra.pt")
+        email_senha = os.environ.get("EMAIL_PASSWORD", "")
+
+        if not email_senha:
+            return jsonify({"erro": "Email não configurado. Contacte o administrador."}), 500
+
+        try:
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = assunto
+            msg["From"] = email_remetente
+            msg["To"] = email_destinatario
+
+            corpo_texto = f"Olá {nome_destinatario},\n\n{mensagem_resposta}\n\nMelhores cumprimentos,\nEquipa Sesimbra"
+            corpo_html = f"""
+            <html>
+              <body style="font-family: Arial, sans-serif; color: #333;">
+                <p>Olá <strong>{nome_destinatario}</strong>,</p>
+                <p>{mensagem_resposta.replace(chr(10), '<br>')}</p>
+                <p style="color: #999; margin-top: 2rem;">Melhores cumprimentos,<br><strong>Equipa Sesimbra</strong></p>
+              </body>
+            </html>
+            """
+
+            msg.attach(MIMEText(corpo_texto, "plain", "utf-8"))
+            msg.attach(MIMEText(corpo_html, "html", "utf-8"))
+
+            servidor_smtp = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
+            porta_smtp = int(os.environ.get("SMTP_PORT", "587"))
+
+            with smtplib.SMTP(servidor_smtp, porta_smtp, timeout=10) as servidor:
+                servidor.starttls()
+                servidor.login(email_remetente, email_senha)
+                servidor.send_message(msg)
+        except smtplib.SMTPException as e:
+            return jsonify({"erro": f"Erro ao enviar email: {str(e)}"}), 500
+
+        return jsonify({"estado": "ok", "mensagem": "Resposta enviada com sucesso."})
+    except Exception as e:
+        return jsonify({"erro": f"Erro: {str(e)}"}), 500
+
+
+@app.route("/api/admin/contactos/<int:cid>/responder", methods=["OPTIONS"])
+def api_admin_responder_contacto_options(cid):
+    return "", 204
+
+
 @app.get("/api/logs")
 def api_logs():
     if not validar_admin_token():
@@ -1284,19 +1357,54 @@ def api_admin_sugestoes_estado(sid):
     if novo_estado not in ("aprovado", "rejeitado"):
         return jsonify({"erro": "Estado inválido."}), 400
 
-    with sqlite3.connect(DB_PATH) as conn:
-        conn.row_factory = sqlite3.Row
-        sugestao = conn.execute(
-            "SELECT * FROM sugestoes WHERE id = ?",
-            (sid,),
-        ).fetchone()
-        if not sugestao:
-            return jsonify({"erro": "Sugestão não encontrada."}), 404
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.row_factory = sqlite3.Row
+            sugestao = conn.execute(
+                "SELECT * FROM sugestoes WHERE id = ?",
+                (sid,),
+            ).fetchone()
+            if not sugestao:
+                return jsonify({"erro": "Sugestão não encontrada."}), 404
 
-        if novo_estado == "aprovado":
-            aplicar_sugestao_na_base(conn, sugestao)
+            if novo_estado == "aprovado":
+                aplicar_sugestao_na_base(conn, sugestao)
+                conn.commit()
 
-        conn.execute("UPDATE sugestoes SET estado = ? WHERE id = ?", (novo_estado, sid))
+            conn.execute("UPDATE sugestoes SET estado = ? WHERE id = ?", (novo_estado, sid))
+            conn.commit()
+    except Exception as e:
+        return jsonify({"erro": f"Erro ao atualizar: {str(e)}"}), 500
+
+    return jsonify({"estado": "ok"})
+
+
+@app.post("/api/admin/sugestoes/<int:sid>")
+def api_admin_sugestoes_atualizar(sid):
+    if not validar_admin_token():
+        return jsonify({"erro": "Acesso não autorizado."}), 401
+
+    dados = request.get_json(silent=True) or {}
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.execute(
+                "UPDATE sugestoes SET nome = ?, descricao = ?, localizacao = ?, telefone = ?, website = ?, website_booking = ?, categoria_atividade = ?, categoria_turistica = ?, alerta = ? WHERE id = ?",
+                (
+                    str(dados.get("nome", "")).strip(),
+                    str(dados.get("descricao", "")).strip(),
+                    str(dados.get("localizacao", "")).strip() or None,
+                    str(dados.get("telefone", "")).strip() or None,
+                    str(dados.get("website", "")).strip() or None,
+                    str(dados.get("website_booking", "")).strip() or None,
+                    str(dados.get("categoria_atividade", "")).strip() or None,
+                    str(dados.get("categoria_turistica", "")).strip() or None,
+                    str(dados.get("alerta", "")).strip() or None,
+                    sid,
+                ),
+            )
+            conn.commit()
+    except Exception as e:
+        return jsonify({"erro": f"Erro ao atualizar: {str(e)}"}), 500
 
     return jsonify({"estado": "ok"})
 
