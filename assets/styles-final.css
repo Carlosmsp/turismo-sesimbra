@@ -1395,6 +1395,11 @@ body.darkMode {
     width: auto;
     height: auto;
     margin: 0;
+    z-index: 11000;
+}
+
+.assistente-painel {
+    z-index: 11100;
 }
 
 .assistente-painel.arrastando {

@@ -1687,7 +1687,19 @@ function criarFiltroCategorias() {
     const sec = document.getElementById("pontos-turisticos");
     if (!sec) return;
     const container = document.createElement("div");
-    container.className = "filtro-categorias";
+    container.className = "atividades-filtros";
+
+    const filtroPesquisa = document.createElement("div");
+    filtroPesquisa.className = "filtro-pesquisa";
+
+    const input = document.getElementById('inputPontosFiltro');
+    if (input) {
+        filtroPesquisa.appendChild(input);
+    }
+
+    const botoes = document.createElement("div");
+    botoes.className = "filtro-categorias";
+
     const categorias = [
         { val: "todos", label: "Todos" },
         { val: "mar", label: "Mar" },
@@ -1700,21 +1712,28 @@ function criarFiltroCategorias() {
     for (const c of categorias) {
         const btn = document.createElement("button");
         btn.type = "button";
-        btn.className = `filtro-cat-btn ${c.val === "todos" ? "ativo" : ""}`;
-        btn.dataset.cat = c.val;
+        btn.className = `btn-categoria ${c.val === "todos" ? "ativo" : ""}`.trim();
+        btn.dataset.categoria = c.val;
+        btn.setAttribute("aria-pressed", c.val === "todos" ? "true" : "false");
         btn.textContent = c.label;
         btn.addEventListener("click", function () {
-            document.querySelectorAll('.filtro-cat-btn').forEach(b => b.classList.remove('ativo'));
+            botoes.querySelectorAll('.btn-categoria').forEach(b => {
+                b.classList.remove('ativo');
+                b.setAttribute('aria-pressed', 'false');
+            });
             this.classList.add('ativo');
-            pontosCategoriaSelecionada = this.dataset.cat;
+            this.setAttribute('aria-pressed', 'true');
+            pontosCategoriaSelecionada = this.dataset.categoria;
             atualizarInterface();
         });
-        container.appendChild(btn);
+        botoes.appendChild(btn);
     }
 
-    // Inserir o filtro antes do input de busca
-    const input = document.getElementById('inputPontosFiltro');
-    if (input) input.before(container);
+    container.appendChild(filtroPesquisa);
+    container.appendChild(botoes);
+
+    const referencia = sec.querySelector(".card") || sec.firstChild;
+    sec.insertBefore(container, referencia);
 }
 
 criarFiltroCategorias();
