@@ -2007,7 +2007,7 @@ function iniciarModalSugestao() {
                             <span>Carregar imagens</span>
                         </label>
                         <input type="file" id="sugFotos" name="fotos" accept="image/*" capture="environment" multiple>
-                        <small>Máx. 3 imagens. Usa a câmara ou a galeria.</small>
+                        <small>Máx. 3 imagens e 3 MB por foto. Usa a câmara ou a galeria.</small>
                     </div>
                     <div class="sugestao-fotos-preview" aria-live="polite"></div>
                 </div>
@@ -2050,8 +2050,19 @@ function iniciarModalSugestao() {
 
     function atualizarPreviewFotos() {
         fotosPreview.replaceChildren();
-        const arquivos = Array.from(fotosInput.files).slice(0, MAX_SUGESTAO_FOTOS);
-        if (arquivos.length === 0) {
+        const arquivosSelecionados = Array.from(fotosInput.files).slice(0, MAX_SUGESTAO_FOTOS);
+        const arquivosInvalidos = arquivosSelecionados.filter(arquivo => arquivo.size > MAX_FOTO_SIZE);
+
+        if (arquivosInvalidos.length) {
+            fotosInput.value = "";
+            const aviso = document.createElement("p");
+            aviso.className = "sugestao-fotos-erro";
+            aviso.textContent = "Uma ou mais imagens excedem 3 MB e foram removidas. Envie outras imagens ou continue sem fotos.";
+            fotosPreview.appendChild(aviso);
+            return;
+        }
+
+        if (arquivosSelecionados.length === 0) {
             const aviso = document.createElement("p");
             aviso.className = "sugestao-fotos-nenhuma";
             aviso.textContent = "Nenhuma imagem selecionada.";
@@ -2059,7 +2070,7 @@ function iniciarModalSugestao() {
             return;
         }
 
-        arquivos.forEach(arquivo => {
+        arquivosSelecionados.forEach(arquivo => {
             const leitor = new FileReader();
             leitor.addEventListener("load", () => {
                 const img = document.createElement("img");
@@ -2108,19 +2119,33 @@ function iniciarModalSugestao() {
         const nome = document.getElementById("sugNome").value.trim();
         const descricao = document.getElementById("sugDesc").value.trim();
 
-        const arquivosFotos = Array.from(fotosInput.files).slice(0, MAX_SUGESTAO_FOTOS);
-        for (const arquivo of arquivosFotos) {
-            if (arquivo.size > MAX_FOTO_SIZE) {
-                resp.textContent = `Cada imagem deve ter até ${Math.round(MAX_FOTO_SIZE / 1024 / 1024)}MB.`;
-                resp.classList.add("erro");
-                return;
-            }
+        const camposFaltantes = [];
+        if (!tipo) {
+            camposFaltantes.push("categoria");
+        }
+        if (nome.length < 3) {
+            camposFaltantes.push("nome");
+        }
+        if (descricao.length < 10) {
+            camposFaltantes.push("descrição");
+        }
+        if (tipo === "atividade" && !document.getElementById("sugCategoria").value.trim()) {
+            camposFaltantes.push("tipo de atividade");
         }
 
-        if (!tipo || nome.length < 3 || descricao.length < 10) {
-            resp.textContent = "Preenche os campos obrigatórios (categoria, nome e descrição).";
+        if (camposFaltantes.length) {
+            resp.textContent = `Preenche os campos obrigatórios: ${camposFaltantes.join(", ")}.`;
             resp.classList.add("erro");
             return;
+        }
+
+        let arquivosFotos = Array.from(fotosInput.files).slice(0, MAX_SUGESTAO_FOTOS);
+        const arquivosInvalidos = arquivosFotos.filter(arquivo => arquivo.size > MAX_FOTO_SIZE);
+        if (arquivosInvalidos.length) {
+            resp.textContent = "Uma ou mais imagens excedem 3 MB e foram removidas. Envie outras imagens ou continue sem fotos.";
+            fotosInput.value = "";
+            atualizarPreviewFotos();
+            arquivosFotos = [];
         }
 
         btn.disabled = true;

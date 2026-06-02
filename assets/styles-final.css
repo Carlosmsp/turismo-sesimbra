@@ -1105,10 +1105,15 @@ body.darkMode {
     border-radius: 1rem;
     border: 1px solid rgba(0,0,0,0.08);
 }
-.sugestao-fotos-nenhuma {
+.sugestao-fotos-nenhuma,
+.sugestao-fotos-erro {
     margin: 0;
     color: rgba(0,0,0,0.55);
     font-size: 0.9rem;
+}
+.sugestao-fotos-erro {
+    color: var(--vermelho);
+    font-weight: 600;
 }
 .sugestao-intro {
     font-size: 0.85rem;
