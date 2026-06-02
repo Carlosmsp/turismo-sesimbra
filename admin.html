@@ -40,8 +40,25 @@
                 <h2>Logs da IA</h2>
                 <div id="logsTabela" class="admin-table-wrap"></div>
             </section>
+
+            <section class="admin-panel">
+                <h2 id="sugestoesTitulo">Sugestões Pendentes</h2>
+                <div id="sugestoesTabela" class="admin-table-wrap"></div>
+            </section>
         </div>
     </main>
+
+    <style>
+        .btn-aprovar, .btn-rejeitar {
+            padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.78rem;
+            font-weight: 600; cursor: pointer; border: none; margin: 0.1rem;
+        }
+        .btn-aprovar { background: #1a7a3a; color: #fff; }
+        .btn-aprovar:hover { background: #145f2c; }
+        .btn-rejeitar { background: #b00020; color: #fff; }
+        .btn-rejeitar:hover { background: #8a0018; }
+        .acao-col { white-space: nowrap; }
+    </style>
 
     <script>
         (function () {
@@ -106,15 +123,61 @@
                 `;
             }
 
+            const TIPO_LABEL = { ponto: "Ponto Turístico", atividade: "Atividade", gastronomia: "Gastronomia", alojamento: "Alojamento" };
+
+            function tabelaSugestoes(sugestoes) {
+                if (!sugestoes.length) return '<p class="admin-empty">Nenhuma sugestão pendente.</p>';
+                return `
+                    <table>
+                        <thead>
+                            <tr><th>ID</th><th>Tipo</th><th>Nome</th><th>Descrição</th><th>Localização</th><th>Website</th><th>Email</th><th>Data</th><th>Ação</th></tr>
+                        </thead>
+                        <tbody>
+                            ${sugestoes.map(s => `
+                                <tr id="sug-${texto(s.id)}">
+                                    <td>${texto(s.id)}</td>
+                                    <td>${texto(TIPO_LABEL[s.tipo] || s.tipo)}</td>
+                                    <td><strong>${texto(s.nome)}</strong></td>
+                                    <td><pre>${texto(s.descricao)}</pre></td>
+                                    <td>${texto(s.localizacao || "-")}</td>
+                                    <td>${s.website ? `<a href="${texto(s.website)}" target="_blank">link</a>` : "-"}</td>
+                                    <td>${texto(s.email_sugestor || "-")}</td>
+                                    <td>${texto(s.criado_em)}</td>
+                                    <td class="acao-col">
+                                        <button class="btn-aprovar" data-id="${texto(s.id)}">✓ Aprovar</button>
+                                        <button class="btn-rejeitar" data-id="${texto(s.id)}">✗ Rejeitar</button>
+                                    </td>
+                                </tr>
+                            `).join("")}
+                        </tbody>
+                    </table>
+                `;
+            }
+
+            async function mudarEstadoSugestao(id, estado) {
+                const res = await fetch(`/api/admin/sugestoes/${id}/estado?token=${encodeURIComponent(token)}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "X-Admin-Token": token },
+                    body: JSON.stringify({ estado })
+                });
+                if (res.ok) {
+                    const linha = document.getElementById(`sug-${id}`);
+                    if (linha) linha.remove();
+                } else {
+                    alert("Erro ao atualizar sugestão.");
+                }
+            }
+
             async function carregar() {
                 if (!token) {
                     status.textContent = "Token em falta no link.";
                     return;
                 }
 
-                const [contactosResp, logsResp] = await Promise.all([
+                const [contactosResp, logsResp, sugestoesResp] = await Promise.all([
                     fetch(`/api/admin/contactos?token=${encodeURIComponent(token)}`),
-                    fetch(`/api/logs?token=${encodeURIComponent(token)}`)
+                    fetch(`/api/logs?token=${encodeURIComponent(token)}`),
+                    fetch(`/api/admin/sugestoes?token=${encodeURIComponent(token)}&estado=pendente`)
                 ]);
 
                 if (!contactosResp.ok || !logsResp.ok) {
@@ -124,8 +187,27 @@
 
                 const contactos = await contactosResp.json();
                 const logs = await logsResp.json();
+                const sugestoes = sugestoesResp.ok ? await sugestoesResp.json() : [];
+
                 contactosTabela.innerHTML = tabelaContactos(contactos);
                 logsTabela.innerHTML = tabelaLogs(logs);
+
+                const sugestoesTabela = document.getElementById("sugestoesTabela");
+                if (sugestoesTabela) {
+                    sugestoesTabela.innerHTML = tabelaSugestoes(sugestoes);
+                    sugestoesTabela.addEventListener("click", function (e) {
+                        const btn = e.target.closest("[data-id]");
+                        if (!btn) return;
+                        const id = btn.dataset.id;
+                        if (btn.classList.contains("btn-aprovar")) mudarEstadoSugestao(id, "aprovado");
+                        if (btn.classList.contains("btn-rejeitar")) mudarEstadoSugestao(id, "rejeitado");
+                    });
+                }
+
+                const pendentes = sugestoes.length;
+                const titulo = document.getElementById("sugestoesTitulo");
+                if (titulo) titulo.textContent = `Sugestões Pendentes${pendentes ? ` (${pendentes})` : ""}`;
+
                 status.textContent = "Dados carregados com sucesso.";
             }
 

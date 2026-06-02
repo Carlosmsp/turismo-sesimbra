@@ -1733,6 +1733,118 @@ function criarResumoCustos(pontos) {
     return div;
 }
 
+function iniciarModalSugestao() {
+    const TIPOS = [
+        { val: "ponto",      label: "Ponto Turístico" },
+        { val: "atividade",  label: "Atividade" },
+        { val: "gastronomia",label: "Gastronomia" },
+        { val: "alojamento", label: "Alojamento" },
+    ];
+
+    const overlay = document.createElement("div");
+    overlay.id = "sugestaoOverlay";
+    overlay.className = "sugestao-overlay oculto";
+    overlay.innerHTML = `
+        <div class="sugestao-modal" role="dialog" aria-modal="true" aria-labelledby="sugestaoTitulo">
+            <button class="sugestao-fechar" aria-label="Fechar">✕</button>
+            <h2 id="sugestaoTitulo">Sugerir novo local</h2>
+            <p class="sugestao-intro">Conheces um local que merece estar aqui? Partilha a tua sugestão — a equipa irá analisar e publicar se aprovado.</p>
+            <form id="formSugestao" novalidate>
+                <label for="sugTipo">Categoria <span aria-hidden="true">*</span></label>
+                <select id="sugTipo" name="tipo" required>
+                    <option value="">-- Escolhe uma categoria --</option>
+                    ${TIPOS.map(t => `<option value="${t.val}">${t.label}</option>`).join("")}
+                </select>
+                <label for="sugNome">Nome <span aria-hidden="true">*</span></label>
+                <input type="text" id="sugNome" name="nome" placeholder="Ex: Restaurante O Mar" maxlength="100" required>
+                <label for="sugDesc">Descrição <span aria-hidden="true">*</span></label>
+                <textarea id="sugDesc" name="descricao" placeholder="Descreve brevemente o local..." maxlength="500" rows="3" required></textarea>
+                <label for="sugLocal">Localização / Morada</label>
+                <input type="text" id="sugLocal" name="localizacao" placeholder="Ex: Rua da Praia, Sesimbra" maxlength="200">
+                <label for="sugWeb">Website</label>
+                <input type="url" id="sugWeb" name="website" placeholder="https://..." maxlength="200">
+                <label for="sugEmail">O teu email (para feedback)</label>
+                <input type="email" id="sugEmail" name="email" placeholder="opcional" maxlength="100">
+                <div id="sugResposta" class="sugestao-resposta" aria-live="polite"></div>
+                <button type="submit" class="sugestao-btn-enviar">Enviar sugestão</button>
+            </form>
+        </div>`;
+    document.body.appendChild(overlay);
+
+    const botaoFlutuante = document.createElement("button");
+    botaoFlutuante.className = "botao-sugerir";
+    botaoFlutuante.setAttribute("aria-label", "Sugerir novo local");
+    botaoFlutuante.innerHTML = "💡 Sugerir";
+    document.body.appendChild(botaoFlutuante);
+
+    function abrirModal() {
+        overlay.classList.remove("oculto");
+        overlay.querySelector("#sugTipo").focus();
+    }
+    function fecharModal() {
+        overlay.classList.add("oculto");
+        document.getElementById("formSugestao").reset();
+        document.getElementById("sugResposta").textContent = "";
+    }
+
+    botaoFlutuante.addEventListener("click", abrirModal);
+    overlay.querySelector(".sugestao-fechar").addEventListener("click", fecharModal);
+    overlay.addEventListener("click", e => { if (e.target === overlay) fecharModal(); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") fecharModal(); });
+
+    document.getElementById("formSugestao").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const resp = document.getElementById("sugResposta");
+        const btn = this.querySelector(".sugestao-btn-enviar");
+        resp.textContent = "";
+        resp.className = "sugestao-resposta";
+
+        const tipo = document.getElementById("sugTipo").value;
+        const nome = document.getElementById("sugNome").value.trim();
+        const descricao = document.getElementById("sugDesc").value.trim();
+
+        if (!tipo || nome.length < 3 || descricao.length < 10) {
+            resp.textContent = "Preenche os campos obrigatórios (categoria, nome e descrição).";
+            resp.classList.add("erro");
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = "A enviar...";
+        try {
+            const csrf = await obterCsrfToken();
+            const res = await fetch("/api/sugestoes", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
+                body: JSON.stringify({
+                    tipo,
+                    nome,
+                    descricao,
+                    localizacao: document.getElementById("sugLocal").value.trim(),
+                    website:     document.getElementById("sugWeb").value.trim(),
+                    email:       document.getElementById("sugEmail").value.trim(),
+                })
+            });
+            const dados = await res.json();
+            if (!res.ok) {
+                resp.textContent = (dados.erros || [dados.erro || "Erro ao enviar."]).join(" ");
+                resp.classList.add("erro");
+            } else {
+                resp.textContent = "✓ " + dados.mensagem;
+                resp.classList.add("sucesso");
+                this.reset();
+                setTimeout(fecharModal, 2000);
+            }
+        } catch {
+            resp.textContent = "Não foi possível enviar. Tente novamente.";
+            resp.classList.add("erro");
+        } finally {
+            btn.disabled = false;
+            btn.textContent = "Enviar sugestão";
+        }
+    });
+}
+
 carregarDarkMode();             // Chamar a funçao ao carregar a pagina
 addNavLinks();                   // Funçao para adicionar o nav
 atualizarPosicaoBotaoDarkMode();
@@ -1746,3 +1858,4 @@ atualizarInterface();
 ativarImagensEstaticas();
 protegerLinksExternos();
 iniciarAssistenteIA();
+iniciarModalSugestao();

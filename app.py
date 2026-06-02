@@ -426,6 +426,7 @@ def init_contactos_db() -> None:
 def init_db() -> None:
     init_logs_db()
     init_contactos_db()
+    init_sugestoes_db()
 
 
 def guardar_log_api(endpoint: str, modelo: str, pedido: dict, resposta: dict, prompt: str, resposta_text: str, estado: str) -> None:
@@ -506,6 +507,25 @@ def obter_dados_projeto() -> dict:
         "alojamentos": ler_tabela_projeto("alojamentos"),
         "atividades": ler_tabela_projeto("atividades"),
     }
+
+
+def init_sugestoes_db() -> None:
+    with sqlite3.connect(CONTACTOS_DB_PATH) as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS sugestoes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tipo TEXT NOT NULL,
+                nome TEXT NOT NULL,
+                descricao TEXT NOT NULL,
+                localizacao TEXT,
+                website TEXT,
+                email_sugestor TEXT,
+                estado TEXT NOT NULL DEFAULT 'pendente',
+                criado_em TEXT NOT NULL
+            )
+            """
+        )
 
 
 def criar_contexto_site_db() -> str:
@@ -1095,6 +1115,70 @@ def api_logs():
         logs.append(item)
 
     return jsonify(logs)
+
+
+@app.post("/api/sugestoes")
+def api_sugestoes_criar():
+    if not validar_csrf():
+        return jsonify({"estado": "erro", "erros": ["Pedido inválido. Atualize a página."]}), 403
+
+    dados = request.get_json(silent=True) or {}
+    tipo = str(dados.get("tipo", "")).strip()
+    nome = str(dados.get("nome", "")).strip()
+    descricao = str(dados.get("descricao", "")).strip()
+    localizacao = str(dados.get("localizacao", "")).strip()
+    website = str(dados.get("website", "")).strip()
+    email_sugestor = str(dados.get("email", "")).strip()
+
+    erros = []
+    if tipo not in ("ponto", "atividade", "gastronomia", "alojamento"):
+        erros.append("Tipo inválido.")
+    if len(nome) < 3:
+        erros.append("Nome deve ter pelo menos 3 caracteres.")
+    if len(descricao) < 10:
+        erros.append("Descrição deve ter pelo menos 10 caracteres.")
+    if erros:
+        return jsonify({"estado": "erro", "erros": erros}), 400
+
+    criado_em = datetime.now().astimezone().isoformat(timespec="seconds")
+    with sqlite3.connect(CONTACTOS_DB_PATH) as conn:
+        conn.execute(
+            "INSERT INTO sugestoes (tipo, nome, descricao, localizacao, website, email_sugestor, criado_em) VALUES (?,?,?,?,?,?,?)",
+            (tipo, nome, descricao, localizacao or None, website or None, email_sugestor or None, criado_em)
+        )
+    return jsonify({"estado": "ok", "mensagem": "Sugestão enviada. Obrigado!"}), 201
+
+
+@app.route("/api/sugestoes", methods=["OPTIONS"])
+def api_sugestoes_options():
+    return "", 204
+
+
+@app.get("/api/admin/sugestoes")
+def api_admin_sugestoes():
+    if not validar_admin_token():
+        return jsonify({"erro": "Acesso não autorizado."}), 401
+    estado_filtro = request.args.get("estado", "pendente")
+    with sqlite3.connect(CONTACTOS_DB_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            "SELECT * FROM sugestoes WHERE estado = ? ORDER BY id DESC",
+            (estado_filtro,)
+        ).fetchall()
+    return jsonify([dict(r) for r in rows])
+
+
+@app.post("/api/admin/sugestoes/<int:sid>/estado")
+def api_admin_sugestoes_estado(sid):
+    if not validar_admin_token():
+        return jsonify({"erro": "Acesso não autorizado."}), 401
+    dados = request.get_json(silent=True) or {}
+    novo_estado = str(dados.get("estado", "")).strip()
+    if novo_estado not in ("aprovado", "rejeitado"):
+        return jsonify({"erro": "Estado inválido."}), 400
+    with sqlite3.connect(CONTACTOS_DB_PATH) as conn:
+        conn.execute("UPDATE sugestoes SET estado = ? WHERE id = ?", (novo_estado, sid))
+    return jsonify({"estado": "ok"})
 
 
 @app.get("/")
