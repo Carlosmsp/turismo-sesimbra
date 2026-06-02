@@ -1377,7 +1377,10 @@ function iniciarAssistenteIA() {
     wrapper.id = "assistenteIa";
     wrapper.className = "assistente-ia";
     wrapper.innerHTML = `
-        <button type="button" class="assistente-toggle" aria-label="Abrir assistente de viagem" aria-expanded="false">CHAT IA</button>
+        <button type="button" class="assistente-toggle" aria-label="Abrir assistente de viagem" aria-expanded="false">
+            <span class="assistente-toggle-icone" aria-hidden="true">🤖</span>
+            <span>Chat IA</span>
+        </button>
         <section class="assistente-painel" aria-label="Assistente de viagem com IA">
             <div class="assistente-topo">
                 <div>

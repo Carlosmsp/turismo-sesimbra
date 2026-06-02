@@ -1259,6 +1259,10 @@ body.darkMode {
 }
 
 .assistente-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
     width: auto;
     min-width: 3.6rem;
     height: 3.6rem;
@@ -1270,10 +1274,18 @@ body.darkMode {
     box-shadow: var(--sombra-hover);
     font-size: 0.82rem;
     font-weight: 700;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.03em;
     cursor: pointer;
     transition: var(--transicao);
     font-family: 'Jost', sans-serif;
+}
+
+.assistente-toggle-icone {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    line-height: 1;
 }
 
 .assistente-toggle:hover {
