@@ -5,10 +5,13 @@ import math
 import os
 import re
 import secrets
+import smtplib
 import sqlite3
 import time
 from collections import defaultdict, deque
 from datetime import datetime
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from pathlib import Path
 from urllib.error import URLError
 from urllib.parse import urlencode
@@ -332,6 +335,11 @@ def init_contactos_db() -> None:
             )
             """
         )
+        for _col_def in ["respondido INTEGER NOT NULL DEFAULT 0", "respondido_em TEXT"]:
+            try:
+                conn.execute(f"ALTER TABLE contactos ADD COLUMN {_col_def}")
+            except Exception:
+                pass
         conn.execute(
             """
             CREATE TABLE IF NOT EXISTS pontos_interesse (
@@ -455,6 +463,45 @@ def guardar_log_api(endpoint: str, modelo: str, pedido: dict, resposta: dict, pr
                 estado,
             ),
         )
+
+
+def enviar_email_resposta(para: str, nome: str, assunto: str, mensagem: str) -> tuple[bool, str]:
+    smtp_host = os.environ.get("EMAIL_SMTP_HOST", "")
+    smtp_port = int(os.environ.get("EMAIL_SMTP_PORT", "587"))
+    email_user = os.environ.get("EMAIL_USER", "")
+    email_pass = os.environ.get("EMAIL_PASS", "")
+    email_from = os.environ.get("EMAIL_FROM", email_user)
+    from_name = os.environ.get("EMAIL_FROM_NAME", "Sesimbra - Guia de Viagem")
+
+    if not all([smtp_host, email_user, email_pass]):
+        return False, "Configuração SMTP em falta (EMAIL_SMTP_HOST, EMAIL_USER, EMAIL_PASS no .env)."
+
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = assunto
+        msg["From"] = f"{from_name} <{email_from}>"
+        msg["To"] = para
+
+        corpo_texto = f"Caro(a) {nome},\n\n{mensagem}\n\nCom os melhores cumprimentos,\nEquipa Sesimbra"
+        corpo_html = (
+            "<html><body style='font-family:sans-serif;color:#0f2342;'>"
+            f"<p>Caro(a) <strong>{nome}</strong>,</p>"
+            f"<p>{mensagem.replace(chr(10), '<br>')}</p>"
+            "<br><p>Com os melhores cumprimentos,<br><strong>Equipa Sesimbra</strong></p>"
+            "</body></html>"
+        )
+        msg.attach(MIMEText(corpo_texto, "plain", "utf-8"))
+        msg.attach(MIMEText(corpo_html, "html", "utf-8"))
+
+        with smtplib.SMTP(smtp_host, smtp_port) as smtp:
+            smtp.ehlo()
+            smtp.starttls()
+            smtp.login(email_user, email_pass)
+            smtp.sendmail(email_from, para, msg.as_string())
+
+        return True, ""
+    except Exception as exc:
+        return False, str(exc)
 
 
 def guardar_contacto(nome: str, email: str, telefone: str, mensagem: str) -> str:
@@ -1178,9 +1225,14 @@ def api_admin_contactos():
         conn.row_factory = sqlite3.Row
         contactos = conn.execute(
             """
-            SELECT id, nome, email, telefone, mensagem, criado_em
-            FROM contactos
-            ORDER BY id DESC
+            SELECT c.id, c.nome, c.email, c.telefone, c.mensagem, c.criado_em,
+                   COALESCE(c.respondido, 0) AS respondido, c.respondido_em,
+                   cr.assunto AS resp_assunto, cr.mensagem AS resp_mensagem, cr.criado_em AS resp_em
+            FROM contactos c
+            LEFT JOIN contactos_respostas cr
+                ON cr.contacto_id = c.id
+                AND cr.id = (SELECT MAX(id) FROM contactos_respostas WHERE contacto_id = c.id)
+            ORDER BY c.id DESC
             LIMIT 100
             """
         ).fetchall()
@@ -1210,17 +1262,32 @@ def api_admin_responder_contacto(cid):
             if not contacto:
                 return jsonify({"erro": "Contacto não encontrado."}), 404
 
-            # Guardar resposta na BD
             data_resposta = datetime.now().astimezone().isoformat(timespec="seconds")
             conn.execute(
-                """INSERT INTO contactos_respostas 
+                """INSERT INTO contactos_respostas
                 (contacto_id, assunto, mensagem, criado_em)
                 VALUES (?,?,?,?)""",
-                (cid, assunto, mensagem_resposta, data_resposta)
+                (cid, assunto, mensagem_resposta, data_resposta),
+            )
+            conn.execute(
+                "UPDATE contactos SET respondido = 1, respondido_em = ? WHERE id = ?",
+                (data_resposta, cid),
             )
             conn.commit()
 
-        return jsonify({"estado": "ok", "mensagem": "Resposta guardada com sucesso."})
+        email_ok, email_msg = enviar_email_resposta(
+            para=contacto["email"],
+            nome=contacto["nome"],
+            assunto=assunto,
+            mensagem=mensagem_resposta,
+        )
+
+        return jsonify({
+            "estado": "ok",
+            "mensagem": "Resposta guardada e email enviado." if email_ok
+                        else f"Resposta guardada na BD. Email não enviado: {email_msg}",
+            "email_enviado": email_ok,
+        })
     except Exception as e:
         return jsonify({"erro": f"Erro: {str(e)}"}), 500
 

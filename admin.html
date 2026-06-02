@@ -149,18 +149,24 @@
                 return `
                     <table>
                         <thead>
-                            <tr><th>ID</th><th>Nome</th><th>Email</th><th>Telefone</th><th>Mensagem</th><th>Data</th><th>Ação</th></tr>
+                            <tr><th>ID</th><th>Nome</th><th>Email</th><th>Telefone</th><th>Mensagem recebida</th><th>Data</th><th>Estado</th><th>Resposta enviada</th><th>Ação</th></tr>
                         </thead>
                         <tbody>
                             ${contactos.map(c => `
-                                <tr id="cont-${texto(c.id)}">
+                                <tr id="cont-${texto(c.id)}" ${c.respondido ? 'style="background:#f0fff4;"' : ''}>
                                     <td>${texto(c.id)}</td>
                                     <td>${texto(c.nome)}</td>
                                     <td>${texto(c.email)}</td>
                                     <td>${texto(c.telefone || "-")}</td>
                                     <td><pre>${texto(c.mensagem)}</pre></td>
                                     <td>${texto(c.criado_em)}</td>
-                                    <td><button class="btn-responder" data-id="${texto(c.id)}" data-nome="${texto(c.nome)}" data-email="${texto(c.email)}">💬 Responder</button></td>
+                                    <td>${c.respondido
+                                        ? '<span style="color:#1a7a3a;font-weight:700;">✓ Respondido</span>'
+                                        : '<span style="color:#b45309;font-weight:600;">● Pendente</span>'}</td>
+                                    <td>${c.resp_mensagem
+                                        ? `<strong>${texto(c.resp_assunto)}</strong><br><pre style="max-width:22rem;white-space:pre-wrap;">${texto(c.resp_mensagem)}</pre><small style="color:#64748b;">${texto(c.resp_em || "")}</small>`
+                                        : '<span style="color:#aaa;">—</span>'}</td>
+                                    <td><button class="btn-responder" data-id="${texto(c.id)}" data-nome="${texto(c.nome)}" data-email="${texto(c.email)}">${c.respondido ? '↩ Responder de novo' : '💬 Responder'}</button></td>
                                 </tr>
                             `).join("")}
                         </tbody>
@@ -309,10 +315,11 @@
                     const dados = await res.json();
                     if (res.ok) {
                         respDiv.className = "resp-resposta sucesso";
-                        respDiv.textContent = "✓ Resposta enviada com sucesso!";
+                        respDiv.textContent = "✓ " + (dados.mensagem || "Resposta guardada!");
                         setTimeout(() => {
                             document.getElementById("modalResponderContacto").classList.add("oculto");
-                        }, 1500);
+                            carregar();
+                        }, 2000);
                     } else {
                         respDiv.className = "resp-resposta erro";
                         respDiv.textContent = "Erro: " + (dados.erro || "Não foi possível enviar.");
