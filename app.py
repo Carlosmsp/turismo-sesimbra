@@ -18,8 +18,9 @@ from flask import Flask, jsonify, request, send_from_directory
 
 
 BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "API_Log.db"
-CONTACTOS_DB_PATH = BASE_DIR / "Projeto.db"
+_DATA_DIR = Path("/data") if Path("/data").exists() else BASE_DIR
+DB_PATH = _DATA_DIR / "sesimbra.db"
+DB_PATH = DB_PATH
 GEMINI_MODEL = "gemini-2.5-flash"
 app = Flask(__name__, static_folder=None)
 ALLOWED_ORIGINS = {
@@ -304,27 +305,8 @@ oficiais, apresentar valores como estimativas.
 """
 
 
-def init_logs_db() -> None:
-    with sqlite3.connect(DB_PATH) as conn:
-        conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS api_logs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                endpoint TEXT NOT NULL,
-                modelo TEXT,
-                pedido_json TEXT NOT NULL,
-                resposta_json TEXT NOT NULL,
-                prompt TEXT,
-                resposta_text TEXT,
-                estado TEXT NOT NULL
-            )
-            """
-        )
-
-
 def init_contactos_db() -> None:
-    with sqlite3.connect(CONTACTOS_DB_PATH) as conn:
+    with sqlite3.connect(DB_PATH) as conn:
         conn.execute(
             """
             CREATE TABLE IF NOT EXISTS contactos (
@@ -424,9 +406,24 @@ def init_contactos_db() -> None:
 
 
 def init_db() -> None:
-    init_logs_db()
     init_contactos_db()
     init_sugestoes_db()
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS api_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                endpoint TEXT NOT NULL,
+                modelo TEXT,
+                pedido_json TEXT NOT NULL,
+                resposta_json TEXT NOT NULL,
+                prompt TEXT,
+                resposta_text TEXT,
+                estado TEXT NOT NULL
+            )
+            """
+        )
 
 
 def guardar_log_api(endpoint: str, modelo: str, pedido: dict, resposta: dict, prompt: str, resposta_text: str, estado: str) -> None:
@@ -451,7 +448,7 @@ def guardar_log_api(endpoint: str, modelo: str, pedido: dict, resposta: dict, pr
 def guardar_contacto(nome: str, email: str, telefone: str, mensagem: str) -> str:
     criado_em = datetime.now().astimezone().isoformat(timespec="seconds")
 
-    with sqlite3.connect(CONTACTOS_DB_PATH) as conn:
+    with sqlite3.connect(DB_PATH) as conn:
         conn.execute(
             """
             INSERT INTO contactos (nome, email, telefone, mensagem, criado_em)
@@ -493,7 +490,7 @@ def validar_dados_contacto(dados: dict) -> tuple[dict, list[str]]:
 
 
 def ler_tabela_projeto(nome_tabela: str) -> list[dict]:
-    with sqlite3.connect(CONTACTOS_DB_PATH) as conn:
+    with sqlite3.connect(DB_PATH) as conn:
         conn.row_factory = sqlite3.Row
         linhas = conn.execute(f"SELECT * FROM {nome_tabela} ORDER BY id").fetchall()
 
@@ -510,7 +507,7 @@ def obter_dados_projeto() -> dict:
 
 
 def init_sugestoes_db() -> None:
-    with sqlite3.connect(CONTACTOS_DB_PATH) as conn:
+    with sqlite3.connect(DB_PATH) as conn:
         conn.execute(
             """
             CREATE TABLE IF NOT EXISTS sugestoes (
@@ -1087,7 +1084,7 @@ def api_admin_contactos():
     if not validar_admin_token():
         return jsonify({"erro": "Acesso não autorizado."}), 401
 
-    with sqlite3.connect(CONTACTOS_DB_PATH) as conn:
+    with sqlite3.connect(DB_PATH) as conn:
         conn.row_factory = sqlite3.Row
         contactos = conn.execute(
             """
@@ -1154,7 +1151,7 @@ def api_sugestoes_criar():
         return jsonify({"estado": "erro", "erros": erros}), 400
 
     criado_em = datetime.now().astimezone().isoformat(timespec="seconds")
-    with sqlite3.connect(CONTACTOS_DB_PATH) as conn:
+    with sqlite3.connect(DB_PATH) as conn:
         conn.execute(
             """INSERT INTO sugestoes
             (tipo, nome, descricao, localizacao, telefone, website, website_booking, categoria_atividade, alerta, email_sugestor, criado_em)
@@ -1174,7 +1171,7 @@ def api_sugestoes_aprovadas():
         query += " AND tipo = ?"
         params.append(tipo)
     query += " ORDER BY id"
-    with sqlite3.connect(CONTACTOS_DB_PATH) as conn:
+    with sqlite3.connect(DB_PATH) as conn:
         conn.row_factory = sqlite3.Row
         rows = conn.execute(query, params).fetchall()
     return jsonify([dict(r) for r in rows])
@@ -1190,7 +1187,7 @@ def api_admin_sugestoes():
     if not validar_admin_token():
         return jsonify({"erro": "Acesso não autorizado."}), 401
     estado_filtro = request.args.get("estado", "pendente")
-    with sqlite3.connect(CONTACTOS_DB_PATH) as conn:
+    with sqlite3.connect(DB_PATH) as conn:
         conn.row_factory = sqlite3.Row
         rows = conn.execute(
             "SELECT * FROM sugestoes WHERE estado = ? ORDER BY id DESC",
@@ -1207,7 +1204,7 @@ def api_admin_sugestoes_estado(sid):
     novo_estado = str(dados.get("estado", "")).strip()
     if novo_estado not in ("aprovado", "rejeitado"):
         return jsonify({"erro": "Estado inválido."}), 400
-    with sqlite3.connect(CONTACTOS_DB_PATH) as conn:
+    with sqlite3.connect(DB_PATH) as conn:
         conn.execute("UPDATE sugestoes SET estado = ? WHERE id = ?", (novo_estado, sid))
     return jsonify({"estado": "ok"})
 
