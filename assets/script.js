@@ -962,6 +962,10 @@ function addNavLinks(){
         elemUl.appendChild(elemLi)
     }
     navLinks.appendChild(elemUl)
+
+    const navActions = document.createElement("div");
+    navActions.className = "nav-cta-buttons";
+    navLinks.after(navActions);
 }
 
 function addPontosTuristicos() {
@@ -1404,7 +1408,9 @@ function iniciarAssistenteIA() {
         </section>
     `;
 
-    document.body.appendChild(wrapper);
+    const actionsContainer = document.querySelector(".nav-cta-buttons");
+    const assistenteMountTarget = actionsContainer || document.body;
+    assistenteMountTarget.appendChild(wrapper);
 
     const toggle = wrapper.querySelector(".assistente-toggle");
     const painel = wrapper.querySelector(".assistente-painel");
@@ -1906,7 +1912,9 @@ function iniciarModalSugestao() {
     botaoFlutuante.className = "botao-sugerir";
     botaoFlutuante.setAttribute("aria-label", "Sugerir novo local");
     botaoFlutuante.innerHTML = "💡 Sugerir";
-    document.body.appendChild(botaoFlutuante);
+    const actionsContainer = document.querySelector(".nav-cta-buttons");
+    const sugestaoMountTarget = actionsContainer || document.body;
+    sugestaoMountTarget.appendChild(botaoFlutuante);
 
     function abrirModal() {
         overlay.classList.remove("oculto");

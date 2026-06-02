@@ -917,10 +917,8 @@ body.darkMode {
    BOTÃO FLUTUANTE SUGERIR
 ================================ */
 .botao-sugerir {
-    position: fixed;
-    top: 13rem;
-    left: 1rem;
-    z-index: 200;
+    order: 1;
+    position: relative;
     background: var(--ouro);
     color: #fff;
     border: none;
@@ -934,6 +932,28 @@ body.darkMode {
     transition: var(--transicao);
 }
 .botao-sugerir:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+
+.nav-cta-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    width: min(1200px, 100%);
+    margin: 0.75rem auto 0;
+    padding: 0 5%;
+}
+
+@media (max-width: 760px) {
+    .nav-cta-buttons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .nav-cta-buttons .assistente-ia,
+    .nav-cta-buttons .botao-sugerir {
+        width: 100%;
+    }
+}
 
 /* ================================
    MODAL SUGESTÃO
@@ -1245,13 +1265,12 @@ body.darkMode {
    ASSISTENTE IA
 ================================ */
 .assistente-ia {
-    position: fixed;
-    right: 1rem;
-    top: 13rem;
-    z-index: 5000;
+    order: 2;
+    position: relative;
     font-family: 'Jost', sans-serif;
-    width: 5.5rem;
-    height: 3.5rem;
+    width: auto;
+    height: auto;
+    margin: 0;
 }
 
 .assistente-painel.arrastando {
