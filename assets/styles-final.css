@@ -918,7 +918,7 @@ body.darkMode {
 ================================ */
 .botao-sugerir {
     position: fixed;
-    top: 4.2rem;
+    top: 7.2rem;
     left: 1rem;
     z-index: 200;
     background: var(--ouro);
@@ -1247,10 +1247,10 @@ body.darkMode {
 .assistente-ia {
     position: fixed;
     right: 1rem;
-    top: 4.2rem;
+    top: 5.2rem;
     z-index: 5000;
     font-family: 'Jost', sans-serif;
-    width: 3.6rem;
+    width: 5.6rem;
     height: 3.6rem;
 }
 
