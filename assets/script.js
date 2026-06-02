@@ -1,11 +1,11 @@
 const links = [
-    { texto: "Início", href: "sesimbra.html" },
-    { texto: "Pontos Turísticos", href: "pontos-turisticos.html" },
-    { texto: "Actividades", href: "atividades.html" },
-    { texto: "Gastronomia", href: "gastronomia.html" },
-    { texto: "Alojamentos", href: "alojamentos.html" },
-    { texto: "História", href: "historia.html" },
-    { texto: "Contactos", href: "contactos.html" }
+    { texto: "Início", href: "sesimbra.html", icone: "🏠", contador: () => null },
+    { texto: "Pontos Turísticos", href: "pontos-turisticos.html", icone: "📍", contador: () => pontosTuristicosLista.length },
+    { texto: "Actividades", href: "atividades.html", icone: "🚣", contador: () => actividadesLista.length },
+    { texto: "Gastronomia", href: "gastronomia.html", icone: "🍽️", contador: () => gastronomiaLista.length },
+    { texto: "Alojamentos", href: "alojamentos.html", icone: "🏨", contador: () => hospedagemLista.length },
+    { texto: "História", href: "historia.html", icone: "📜", contador: () => 1 },
+    { texto: "Contactos", href: "contactos.html", icone: "☎️", contador: () => 1 }
 ];
 const pontosTuristicosLista = [
     {
@@ -952,12 +952,30 @@ function addNavLinks(){
     for (const l of links){
         const elemLi = document.createElement("li")
         const elemA = document.createElement("a")
-        elemA.textContent = l.texto;
         elemA.href = l.href;
         if (l.href === paginaAtual) {
             elemA.classList.add("ativo");
             elemA.setAttribute("aria-current", "page");
         }
+
+        const iconSpan = document.createElement("span");
+        iconSpan.className = "nav-link-icon";
+        iconSpan.setAttribute("aria-hidden", "true");
+        iconSpan.textContent = l.icone || "•";
+        elemA.appendChild(iconSpan);
+
+        const textSpan = document.createElement("span");
+        textSpan.textContent = l.texto;
+        elemA.appendChild(textSpan);
+
+        const countValue = typeof l.contador === "function" ? l.contador() : l.contador;
+        if (countValue != null) {
+            const badge = document.createElement("span");
+            badge.className = "nav-link-count";
+            badge.textContent = countValue;
+            elemA.appendChild(badge);
+        }
+
         elemLi.appendChild(elemA)
         elemUl.appendChild(elemLi)
     }
@@ -1902,6 +1920,19 @@ function iniciarModalSugestao() {
                 <label for="sugEmail">O teu email (para feedback)</label>
                 <input type="email" id="sugEmail" name="email" placeholder="opcional" maxlength="100">
 
+                <div class="sugestao-fotos">
+                    <label for="sugFotos">Fotos (opcional)</label>
+                    <div class="sugestao-fotos-acao">
+                        <label class="sugestao-fotos-label" for="sugFotos">
+                            <span aria-hidden="true">📸</span>
+                            <span>Carregar imagens</span>
+                        </label>
+                        <input type="file" id="sugFotos" name="fotos" accept="image/*" capture="environment" multiple>
+                        <small>Máx. 3 imagens. Usa a câmara ou a galeria.</small>
+                    </div>
+                    <div class="sugestao-fotos-preview" aria-live="polite"></div>
+                </div>
+
                 <div id="sugResposta" class="sugestao-resposta" aria-live="polite"></div>
                 <button type="submit" class="sugestao-btn-enviar">Enviar sugestão</button>
             </form>
@@ -1911,7 +1942,7 @@ function iniciarModalSugestao() {
     const botaoFlutuante = document.createElement("button");
     botaoFlutuante.className = "botao-sugerir";
     botaoFlutuante.setAttribute("aria-label", "Sugerir novo local");
-    botaoFlutuante.innerHTML = "💡 Sugerir";
+    botaoFlutuante.innerHTML = "� Sugerir";
     const actionsContainer = document.querySelector(".nav-cta-buttons");
     const sugestaoMountTarget = actionsContainer || document.body;
     sugestaoMountTarget.appendChild(botaoFlutuante);
@@ -1924,18 +1955,60 @@ function iniciarModalSugestao() {
         overlay.classList.add("oculto");
         document.getElementById("formSugestao").reset();
         document.getElementById("sugResposta").textContent = "";
+        fotosPreview.replaceChildren();
     }
 
     const selectTipo = overlay.querySelector("#sugTipo");
     const campoBooking   = overlay.querySelector("#sugCampoBooking");
     const campoCategoria = overlay.querySelector("#sugCampoCategoria");
     const campoAlerta    = overlay.querySelector("#sugCampoAlerta");
+    const fotosInput     = overlay.querySelector("#sugFotos");
+    const fotosPreview   = overlay.querySelector(".sugestao-fotos-preview");
+
+    const MAX_SUGESTAO_FOTOS = 3;
+    const MAX_FOTO_SIZE = 3 * 1024 * 1024;
+
+    function atualizarPreviewFotos() {
+        fotosPreview.replaceChildren();
+        const arquivos = Array.from(fotosInput.files).slice(0, MAX_SUGESTAO_FOTOS);
+        if (arquivos.length === 0) {
+            const aviso = document.createElement("p");
+            aviso.className = "sugestao-fotos-nenhuma";
+            aviso.textContent = "Nenhuma imagem selecionada.";
+            fotosPreview.appendChild(aviso);
+            return;
+        }
+
+        arquivos.forEach(arquivo => {
+            const leitor = new FileReader();
+            leitor.addEventListener("load", () => {
+                const img = document.createElement("img");
+                img.src = leitor.result;
+                img.alt = arquivo.name;
+                fotosPreview.appendChild(img);
+            });
+            leitor.readAsDataURL(arquivo);
+        });
+    }
+
+    function lerImagemParaBase64(arquivo) {
+        return new Promise((resolve, reject) => {
+            const leitor = new FileReader();
+            leitor.onload = () => resolve(leitor.result);
+            leitor.onerror = () => reject(new Error("Não foi possível ler a imagem."));
+            leitor.readAsDataURL(arquivo);
+        });
+    }
 
     selectTipo.addEventListener("change", function () {
         const t = this.value;
         campoBooking.classList.toggle("oculto",   t !== "alojamento");
         campoCategoria.classList.toggle("oculto", t !== "atividade");
         campoAlerta.classList.toggle("oculto",    t !== "ponto");
+    });
+
+    fotosInput.addEventListener("change", () => {
+        atualizarPreviewFotos();
     });
 
     botaoFlutuante.addEventListener("click", abrirModal);
@@ -1954,6 +2027,15 @@ function iniciarModalSugestao() {
         const nome = document.getElementById("sugNome").value.trim();
         const descricao = document.getElementById("sugDesc").value.trim();
 
+        const arquivosFotos = Array.from(fotosInput.files).slice(0, MAX_SUGESTAO_FOTOS);
+        for (const arquivo of arquivosFotos) {
+            if (arquivo.size > MAX_FOTO_SIZE) {
+                resp.textContent = `Cada imagem deve ter até ${Math.round(MAX_FOTO_SIZE / 1024 / 1024)}MB.`;
+                resp.classList.add("erro");
+                return;
+            }
+        }
+
         if (!tipo || nome.length < 3 || descricao.length < 10) {
             resp.textContent = "Preenche os campos obrigatórios (categoria, nome e descrição).";
             resp.classList.add("erro");
@@ -1963,6 +2045,7 @@ function iniciarModalSugestao() {
         btn.disabled = true;
         btn.textContent = "A enviar...";
         try {
+            const imagens = await Promise.all(arquivosFotos.map(lerImagemParaBase64));
             const csrf = await obterCsrfToken();
             const res = await fetch("/api/sugestoes", {
                 method: "POST",
@@ -1978,6 +2061,7 @@ function iniciarModalSugestao() {
                     categoria_atividade:  document.getElementById("sugCategoria").value.trim(),
                     alerta:               document.getElementById("sugAlerta").value.trim(),
                     email:                document.getElementById("sugEmail").value.trim(),
+                    imagens:              imagens
                 })
             });
             const dados = await res.json();
@@ -1988,6 +2072,7 @@ function iniciarModalSugestao() {
                 resp.textContent = "✓ " + dados.mensagem;
                 resp.classList.add("sucesso");
                 this.reset();
+                fotosPreview.replaceChildren();
                 setTimeout(fecharModal, 2000);
             }
         } catch {

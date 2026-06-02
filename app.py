@@ -521,13 +521,14 @@ def init_sugestoes_db() -> None:
                 website_booking TEXT,
                 categoria_atividade TEXT,
                 alerta TEXT,
+                imagens TEXT,
                 email_sugestor TEXT,
                 estado TEXT NOT NULL DEFAULT 'pendente',
                 criado_em TEXT NOT NULL
             )
             """
         )
-        for col in ("telefone", "website_booking", "categoria_atividade", "alerta"):
+        for col in ("telefone", "website_booking", "categoria_atividade", "alerta", "imagens"):
             try:
                 conn.execute(f"ALTER TABLE sugestoes ADD COLUMN {col} TEXT")
             except Exception:
@@ -1150,14 +1151,15 @@ def api_sugestoes_criar():
     if erros:
         return jsonify({"estado": "erro", "erros": erros}), 400
 
+    imagens = dados.get("imagens") if isinstance(dados.get("imagens"), list) else []
     criado_em = datetime.now().astimezone().isoformat(timespec="seconds")
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute(
             """INSERT INTO sugestoes
-            (tipo, nome, descricao, localizacao, telefone, website, website_booking, categoria_atividade, alerta, email_sugestor, criado_em)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+            (tipo, nome, descricao, localizacao, telefone, website, website_booking, categoria_atividade, alerta, imagens, email_sugestor, criado_em)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
             (tipo, nome, descricao, localizacao or None, telefone or None, website or None,
-             website_booking or None, categoria_atividade or None, alerta or None, email_sugestor or None, criado_em)
+             website_booking or None, categoria_atividade or None, alerta or None, json.dumps(imagens), email_sugestor or None, criado_em)
         )
     return jsonify({"estado": "ok", "mensagem": "Sugestão enviada. Obrigado!"}), 201
 
