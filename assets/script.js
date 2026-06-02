@@ -2049,6 +2049,10 @@ function iniciarModalSugestao() {
     const campoCategoriaTuristica = overlay.querySelector("#sugCampoCategoriaTuristica");
     const fotosInput     = overlay.querySelector("#sugFotos");
     const fotosPreview   = overlay.querySelector(".sugestao-fotos-preview");
+    const modal = overlay.querySelector(".sugestao-modal");
+
+    // Evitar que cliques na modal propaguem ao overlay
+    modal.addEventListener("click", e => e.stopPropagation(), false);
 
     const MAX_SUGESTAO_FOTOS = 3;
     const MAX_FOTO_SIZE = 3 * 1024 * 1024;
@@ -2110,7 +2114,14 @@ function iniciarModalSugestao() {
 
     botaoFlutuante.addEventListener("click", abrirModal);
     overlay.querySelector(".sugestao-fechar").addEventListener("click", fecharModal);
-    overlay.addEventListener("click", e => { if (e.target === overlay) fecharModal(); });
+    
+    // Fechar modal apenas ao clicar no overlay (fundo), não na modal em si
+    overlay.addEventListener("click", e => {
+        if (e.target === overlay || !e.target.closest(".sugestao-modal")) {
+            fecharModal();
+        }
+    }, false);
+    
     document.addEventListener("keydown", e => { if (e.key === "Escape") fecharModal(); });
 
     document.getElementById("formSugestao").addEventListener("submit", async function (e) {

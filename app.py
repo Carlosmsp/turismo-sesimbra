@@ -7,11 +7,8 @@ import re
 import secrets
 import sqlite3
 import time
-import smtplib
 from collections import defaultdict, deque
 from datetime import datetime
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 from pathlib import Path
 from urllib.error import URLError
 from urllib.parse import urlencode
@@ -321,6 +318,18 @@ def init_contactos_db() -> None:
                 criado_em TEXT NOT NULL
             )
 
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS contactos_respostas (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                contacto_id INTEGER NOT NULL,
+                assunto TEXT NOT NULL,
+                mensagem TEXT NOT NULL,
+                criado_em TEXT NOT NULL,
+                FOREIGN KEY (contacto_id) REFERENCES contactos(id)
+            )
             """
         )
         conn.execute(
@@ -1200,45 +1209,17 @@ def api_admin_responder_contacto(cid):
             if not contacto:
                 return jsonify({"erro": "Contacto não encontrado."}), 404
 
-        email_destinatario = contacto["email"]
-        nome_destinatario = contacto["nome"]
-        email_remetente = os.environ.get("EMAIL_ADMIN", "noreply@sesimbra.pt")
-        email_senha = os.environ.get("EMAIL_PASSWORD", "")
+            # Guardar resposta na BD
+            data_resposta = datetime.now().astimezone().isoformat(timespec="seconds")
+            conn.execute(
+                """INSERT INTO contactos_respostas 
+                (contacto_id, assunto, mensagem, criado_em)
+                VALUES (?,?,?,?)""",
+                (cid, assunto, mensagem_resposta, data_resposta)
+            )
+            conn.commit()
 
-        if not email_senha:
-            return jsonify({"erro": "Email não configurado. Contacte o administrador."}), 500
-
-        try:
-            msg = MIMEMultipart("alternative")
-            msg["Subject"] = assunto
-            msg["From"] = email_remetente
-            msg["To"] = email_destinatario
-
-            corpo_texto = f"Olá {nome_destinatario},\n\n{mensagem_resposta}\n\nMelhores cumprimentos,\nEquipa Sesimbra"
-            corpo_html = f"""
-            <html>
-              <body style="font-family: Arial, sans-serif; color: #333;">
-                <p>Olá <strong>{nome_destinatario}</strong>,</p>
-                <p>{mensagem_resposta.replace(chr(10), '<br>')}</p>
-                <p style="color: #999; margin-top: 2rem;">Melhores cumprimentos,<br><strong>Equipa Sesimbra</strong></p>
-              </body>
-            </html>
-            """
-
-            msg.attach(MIMEText(corpo_texto, "plain", "utf-8"))
-            msg.attach(MIMEText(corpo_html, "html", "utf-8"))
-
-            servidor_smtp = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
-            porta_smtp = int(os.environ.get("SMTP_PORT", "587"))
-
-            with smtplib.SMTP(servidor_smtp, porta_smtp, timeout=10) as servidor:
-                servidor.starttls()
-                servidor.login(email_remetente, email_senha)
-                servidor.send_message(msg)
-        except smtplib.SMTPException as e:
-            return jsonify({"erro": f"Erro ao enviar email: {str(e)}"}), 500
-
-        return jsonify({"estado": "ok", "mensagem": "Resposta enviada com sucesso."})
+        return jsonify({"estado": "ok", "mensagem": "Resposta guardada com sucesso."})
     except Exception as e:
         return jsonify({"erro": f"Erro: {str(e)}"}), 500
 
