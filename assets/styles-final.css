@@ -797,6 +797,28 @@ footer p::before {
     .card-actions .card-link { flex: 1 1 calc(50% - 0.75rem); min-width: 140px; }
 }
 
+/* filtro de categorias para Pontos Turísticos */
+.filtro-categorias {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin: 0.75rem 0 0.5rem;
+}
+.filtro-cat-btn {
+    padding: 0.35rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.04);
+    color: rgba(255,255,255,0.92);
+    cursor: pointer;
+    font-weight: 600;
+}
+.filtro-cat-btn.ativo {
+    background: rgba(255,255,255,0.95);
+    color: var(--azul-profundo);
+    border-color: rgba(0,0,0,0.06);
+}
+
 @media (max-width: 600px) {
     nav ul { gap: 0.35rem; }
     nav a { font-size: 0.72rem; padding: 0.3rem 0.65rem; }

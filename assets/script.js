@@ -491,6 +491,7 @@ const hospedagemCard = document.getElementById("hospedagemCard")
 
 let pontosFiltrados = pontosTuristicosLista;
 let telefoneInternacional = null;
+let pontosCategoriaSelecionada = "todos";
 
 if (inputTelefone && window.intlTelInput) {
     telefoneInternacional = window.intlTelInput(inputTelefone, {
@@ -968,13 +969,7 @@ function addNavLinks(){
         textSpan.textContent = l.texto;
         elemA.appendChild(textSpan);
 
-        const countValue = typeof l.contador === "function" ? l.contador() : l.contador;
-        if (countValue != null) {
-            const badge = document.createElement("span");
-            badge.className = "nav-link-count";
-            badge.textContent = countValue;
-            elemA.appendChild(badge);
-        }
+        // removido: não mostrar contadores no menu (pedido do utilizador)
 
         elemLi.appendChild(elemA)
         elemUl.appendChild(elemLi)
@@ -1236,6 +1231,17 @@ function filtrarPorNome() {
         }
         return resultado;
     }
+}
+
+function classificarPonto(p) {
+    if (p.categoria) return p.categoria;
+    const texto = ((p.title || "") + " " + (p.description || "")).toLowerCase();
+    if (texto.includes("praia")) return "praia";
+    if (texto.includes("cabo") || texto.includes("porto") || texto.includes("mar") || texto.includes("oceano") || texto.includes("baía") || texto.includes("baia")) return "mar";
+    if (texto.includes("arrábida") || texto.includes("serra") || texto.includes("mont")) return "serra";
+    if (texto.includes("camp") || texto.includes("lagoa") || texto.includes("parque") || texto.includes("fazenda") || texto.includes("quinta")) return "campo";
+    if (texto.includes("castelo") || texto.includes("forte") || texto.includes("museu") || texto.includes("centro") || texto.includes("vila") || texto.includes("ruas")) return "cidade";
+    return "outros";
 }
 const gastroCard = document.getElementById("gastroCard");
 const inputGastroFiltro = document.getElementById("inputGastroFiltro");
@@ -1663,14 +1669,55 @@ function iniciarAssistenteIA() {
 }
 
 function aplicarFiltros() {
-
+    // Filtrar por nome/entrada
     pontosFiltrados = filtrarPorNome();
+    // Filtrar por categoria se selecionada
+    if (pontosCategoriaSelecionada && pontosCategoriaSelecionada !== "todos") {
+        pontosFiltrados = pontosFiltrados.filter(p => classificarPonto(p) === pontosCategoriaSelecionada);
+    }
 }
 
 function atualizarInterface() {
     aplicarFiltros();
     addPontosTuristicos();
 }
+
+// Criar UI de filtro por categorias na página de pontos turísticos
+function criarFiltroCategorias() {
+    const sec = document.getElementById("pontos-turisticos");
+    if (!sec) return;
+    const container = document.createElement("div");
+    container.className = "filtro-categorias";
+    const categorias = [
+        { val: "todos", label: "Todos" },
+        { val: "mar", label: "Mar" },
+        { val: "praia", label: "Praia" },
+        { val: "campo", label: "Campo" },
+        { val: "serra", label: "Serra" },
+        { val: "cidade", label: "Cidade" },
+        { val: "outros", label: "Outros" }
+    ];
+    for (const c of categorias) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `filtro-cat-btn ${c.val === "todos" ? "ativo" : ""}`;
+        btn.dataset.cat = c.val;
+        btn.textContent = c.label;
+        btn.addEventListener("click", function () {
+            document.querySelectorAll('.filtro-cat-btn').forEach(b => b.classList.remove('ativo'));
+            this.classList.add('ativo');
+            pontosCategoriaSelecionada = this.dataset.cat;
+            atualizarInterface();
+        });
+        container.appendChild(btn);
+    }
+
+    // Inserir o filtro antes do input de busca
+    const input = document.getElementById('inputPontosFiltro');
+    if (input) input.before(container);
+}
+
+criarFiltroCategorias();
 const PONTOS_GPS = {
     "Praia do Ouro":               "38.4438,-9.1052",
     "Castelo de Sesimbra":         "38.4517,-9.0973",
@@ -1917,6 +1964,19 @@ function iniciarModalSugestao() {
                     <input type="text" id="sugAlerta" name="alerta" placeholder="Ex: Romaria em Setembro, entrada gratuita..." maxlength="300">
                 </div>
 
+                <div id="sugCampoCategoriaTuristica" class="sug-condicional oculto">
+                    <label for="sugCategoriaTuristica">Classificação do ponto</label>
+                    <select id="sugCategoriaTuristica" name="categoria_turistica">
+                        <option value="">-- Escolhe uma classificação --</option>
+                        <option value="mar">Mar</option>
+                        <option value="praia">Praia</option>
+                        <option value="campo">Campo</option>
+                        <option value="serra">Serra</option>
+                        <option value="cidade">Cidade</option>
+                        <option value="outros">Outros</option>
+                    </select>
+                </div>
+
                 <label for="sugEmail">O teu email (para feedback)</label>
                 <input type="email" id="sugEmail" name="email" placeholder="opcional" maxlength="100">
 
@@ -1962,6 +2022,7 @@ function iniciarModalSugestao() {
     const campoBooking   = overlay.querySelector("#sugCampoBooking");
     const campoCategoria = overlay.querySelector("#sugCampoCategoria");
     const campoAlerta    = overlay.querySelector("#sugCampoAlerta");
+    const campoCategoriaTuristica = overlay.querySelector("#sugCampoCategoriaTuristica");
     const fotosInput     = overlay.querySelector("#sugFotos");
     const fotosPreview   = overlay.querySelector(".sugestao-fotos-preview");
 
@@ -2005,6 +2066,7 @@ function iniciarModalSugestao() {
         campoBooking.classList.toggle("oculto",   t !== "alojamento");
         campoCategoria.classList.toggle("oculto", t !== "atividade");
         campoAlerta.classList.toggle("oculto",    t !== "ponto");
+        campoCategoriaTuristica.classList.toggle("oculto", t !== "ponto");
     });
 
     fotosInput.addEventListener("change", () => {
@@ -2059,6 +2121,7 @@ function iniciarModalSugestao() {
                     website:              document.getElementById("sugWeb").value.trim(),
                     website_booking:      document.getElementById("sugBooking").value.trim(),
                     categoria_atividade:  document.getElementById("sugCategoria").value.trim(),
+                    categoria_turistica: document.getElementById("sugCategoriaTuristica").value.trim(),
                     alerta:               document.getElementById("sugAlerta").value.trim(),
                     email:                document.getElementById("sugEmail").value.trim(),
                     imagens:              imagens

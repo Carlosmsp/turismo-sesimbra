@@ -520,6 +520,7 @@ def init_sugestoes_db() -> None:
                 website TEXT,
                 website_booking TEXT,
                 categoria_atividade TEXT,
+                categoria_turistica TEXT,
                 alerta TEXT,
                 imagens TEXT,
                 email_sugestor TEXT,
@@ -528,7 +529,7 @@ def init_sugestoes_db() -> None:
             )
             """
         )
-        for col in ("telefone", "website_booking", "categoria_atividade", "alerta", "imagens"):
+        for col in ("telefone", "website_booking", "categoria_atividade", "categoria_turistica", "alerta", "imagens"):
             try:
                 conn.execute(f"ALTER TABLE sugestoes ADD COLUMN {col} TEXT")
             except Exception:
@@ -1138,6 +1139,7 @@ def api_sugestoes_criar():
     website = str(dados.get("website", "")).strip()
     website_booking = str(dados.get("website_booking", "")).strip()
     categoria_atividade = str(dados.get("categoria_atividade", "")).strip()
+    categoria_turistica = str(dados.get("categoria_turistica", "")).strip()
     alerta = str(dados.get("alerta", "")).strip()
     email_sugestor = str(dados.get("email", "")).strip()
 
@@ -1156,10 +1158,10 @@ def api_sugestoes_criar():
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute(
             """INSERT INTO sugestoes
-            (tipo, nome, descricao, localizacao, telefone, website, website_booking, categoria_atividade, alerta, imagens, email_sugestor, criado_em)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (tipo, nome, descricao, localizacao, telefone, website, website_booking, categoria_atividade, categoria_turistica, alerta, imagens, email_sugestor, criado_em)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (tipo, nome, descricao, localizacao or None, telefone or None, website or None,
-             website_booking or None, categoria_atividade or None, alerta or None, json.dumps(imagens), email_sugestor or None, criado_em)
+             website_booking or None, categoria_atividade or None, categoria_turistica or None, alerta or None, json.dumps(imagens), email_sugestor or None, criado_em)
         )
     return jsonify({"estado": "ok", "mensagem": "Sugestão enviada. Obrigado!"}), 201
 
