@@ -519,6 +519,7 @@ def obter_dados_projeto() -> dict:
 
 
 def aplicar_sugestao_na_base(conn: sqlite3.Connection, sugestao: sqlite3.Row) -> None:
+    sugestao = dict(sugestao)
     tipo = sugestao["tipo"]
     nome = sugestao["nome"].strip()
     descricao = sugestao["descricao"].strip()
