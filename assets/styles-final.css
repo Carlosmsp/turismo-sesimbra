@@ -918,16 +918,16 @@ body.darkMode {
 ================================ */
 .botao-sugerir {
     position: fixed;
-    bottom: 5rem;
-    left: 1.25rem;
+    top: 4.2rem;
+    left: 1rem;
     z-index: 200;
     background: var(--ouro);
     color: #fff;
     border: none;
     border-radius: 50px;
-    padding: 0.55rem 1.1rem;
+    padding: 0.45rem 1rem;
     font-family: 'Jost', sans-serif;
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     font-weight: 600;
     cursor: pointer;
     box-shadow: 0 4px 16px rgba(0,0,0,0.18);
@@ -1246,8 +1246,8 @@ body.darkMode {
 ================================ */
 .assistente-ia {
     position: fixed;
-    right: 1.25rem;
-    bottom: 1.25rem;
+    right: 1rem;
+    top: 4.2rem;
     z-index: 5000;
     font-family: 'Jost', sans-serif;
     width: 3.6rem;
@@ -1283,8 +1283,8 @@ body.darkMode {
 
 .assistente-painel {
     position: fixed;
-    right: 1.25rem;
-    bottom: 5.6rem;
+    right: 1rem;
+    top: 8.2rem;
     width: min(430px, calc(100vw - 2.5rem));
     height: min(680px, calc(100vh - 6rem));
     max-height: min(680px, calc(100vh - 6rem));
