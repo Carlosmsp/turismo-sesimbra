@@ -519,13 +519,22 @@ def init_sugestoes_db() -> None:
                 nome TEXT NOT NULL,
                 descricao TEXT NOT NULL,
                 localizacao TEXT,
+                telefone TEXT,
                 website TEXT,
+                website_booking TEXT,
+                categoria_atividade TEXT,
+                alerta TEXT,
                 email_sugestor TEXT,
                 estado TEXT NOT NULL DEFAULT 'pendente',
                 criado_em TEXT NOT NULL
             )
             """
         )
+        for col in ("telefone", "website_booking", "categoria_atividade", "alerta"):
+            try:
+                conn.execute(f"ALTER TABLE sugestoes ADD COLUMN {col} TEXT")
+            except Exception:
+                pass
 
 
 def criar_contexto_site_db() -> str:
@@ -1127,7 +1136,11 @@ def api_sugestoes_criar():
     nome = str(dados.get("nome", "")).strip()
     descricao = str(dados.get("descricao", "")).strip()
     localizacao = str(dados.get("localizacao", "")).strip()
+    telefone = str(dados.get("telefone", "")).strip()
     website = str(dados.get("website", "")).strip()
+    website_booking = str(dados.get("website_booking", "")).strip()
+    categoria_atividade = str(dados.get("categoria_atividade", "")).strip()
+    alerta = str(dados.get("alerta", "")).strip()
     email_sugestor = str(dados.get("email", "")).strip()
 
     erros = []
@@ -1143,8 +1156,11 @@ def api_sugestoes_criar():
     criado_em = datetime.now().astimezone().isoformat(timespec="seconds")
     with sqlite3.connect(CONTACTOS_DB_PATH) as conn:
         conn.execute(
-            "INSERT INTO sugestoes (tipo, nome, descricao, localizacao, website, email_sugestor, criado_em) VALUES (?,?,?,?,?,?,?)",
-            (tipo, nome, descricao, localizacao or None, website or None, email_sugestor or None, criado_em)
+            """INSERT INTO sugestoes
+            (tipo, nome, descricao, localizacao, telefone, website, website_booking, categoria_atividade, alerta, email_sugestor, criado_em)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+            (tipo, nome, descricao, localizacao or None, telefone or None, website or None,
+             website_booking or None, categoria_atividade or None, alerta or None, email_sugestor or None, criado_em)
         )
     return jsonify({"estado": "ok", "mensagem": "Sugestão enviada. Obrigado!"}), 201
 

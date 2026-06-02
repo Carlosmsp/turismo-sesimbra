@@ -1377,7 +1377,7 @@ function iniciarAssistenteIA() {
     wrapper.id = "assistenteIa";
     wrapper.className = "assistente-ia";
     wrapper.innerHTML = `
-        <button type="button" class="assistente-toggle" aria-label="Abrir assistente de viagem" aria-expanded="false">?</button>
+        <button type="button" class="assistente-toggle" aria-label="Abrir assistente de viagem" aria-expanded="false">CHAT IA</button>
         <section class="assistente-painel" aria-label="Assistente de viagem com IA">
             <div class="assistente-topo">
                 <div>
@@ -1853,16 +1853,46 @@ function iniciarModalSugestao() {
                     <option value="">-- Escolhe uma categoria --</option>
                     ${TIPOS.map(t => `<option value="${t.val}">${t.label}</option>`).join("")}
                 </select>
+
                 <label for="sugNome">Nome <span aria-hidden="true">*</span></label>
                 <input type="text" id="sugNome" name="nome" placeholder="Ex: Restaurante O Mar" maxlength="100" required>
+
                 <label for="sugDesc">Descrição <span aria-hidden="true">*</span></label>
                 <textarea id="sugDesc" name="descricao" placeholder="Descreve brevemente o local..." maxlength="500" rows="3" required></textarea>
+
                 <label for="sugLocal">Localização / Morada</label>
                 <input type="text" id="sugLocal" name="localizacao" placeholder="Ex: Rua da Praia, Sesimbra" maxlength="200">
-                <label for="sugWeb">Website</label>
+
+                <label for="sugTelefone">Telefone</label>
+                <input type="tel" id="sugTelefone" name="telefone" placeholder="Ex: +351 212 345 678" maxlength="30">
+
+                <label for="sugWeb">Site oficial</label>
                 <input type="url" id="sugWeb" name="website" placeholder="https://..." maxlength="200">
+
+                <div id="sugCampoBooking" class="sug-condicional oculto">
+                    <label for="sugBooking">Site de reservas (Booking, Airbnb...)</label>
+                    <input type="url" id="sugBooking" name="website_booking" placeholder="https://www.booking.com/..." maxlength="200">
+                </div>
+
+                <div id="sugCampoCategoria" class="sug-condicional oculto">
+                    <label for="sugCategoria">Tipo de atividade</label>
+                    <select id="sugCategoria" name="categoria_atividade">
+                        <option value="">-- Escolhe o tipo --</option>
+                        <option value="agua">Água</option>
+                        <option value="natureza">Natureza</option>
+                        <option value="aventura">Aventura</option>
+                        <option value="cultura">Cultura</option>
+                    </select>
+                </div>
+
+                <div id="sugCampoAlerta" class="sug-condicional oculto">
+                    <label for="sugAlerta">Alerta / Evento associado</label>
+                    <input type="text" id="sugAlerta" name="alerta" placeholder="Ex: Romaria em Setembro, entrada gratuita..." maxlength="300">
+                </div>
+
                 <label for="sugEmail">O teu email (para feedback)</label>
                 <input type="email" id="sugEmail" name="email" placeholder="opcional" maxlength="100">
+
                 <div id="sugResposta" class="sugestao-resposta" aria-live="polite"></div>
                 <button type="submit" class="sugestao-btn-enviar">Enviar sugestão</button>
             </form>
@@ -1884,6 +1914,18 @@ function iniciarModalSugestao() {
         document.getElementById("formSugestao").reset();
         document.getElementById("sugResposta").textContent = "";
     }
+
+    const selectTipo = overlay.querySelector("#sugTipo");
+    const campoBooking   = overlay.querySelector("#sugCampoBooking");
+    const campoCategoria = overlay.querySelector("#sugCampoCategoria");
+    const campoAlerta    = overlay.querySelector("#sugCampoAlerta");
+
+    selectTipo.addEventListener("change", function () {
+        const t = this.value;
+        campoBooking.classList.toggle("oculto",   t !== "alojamento");
+        campoCategoria.classList.toggle("oculto", t !== "atividade");
+        campoAlerta.classList.toggle("oculto",    t !== "ponto");
+    });
 
     botaoFlutuante.addEventListener("click", abrirModal);
     overlay.querySelector(".sugestao-fechar").addEventListener("click", fecharModal);
@@ -1918,9 +1960,13 @@ function iniciarModalSugestao() {
                     tipo,
                     nome,
                     descricao,
-                    localizacao: document.getElementById("sugLocal").value.trim(),
-                    website:     document.getElementById("sugWeb").value.trim(),
-                    email:       document.getElementById("sugEmail").value.trim(),
+                    localizacao:          document.getElementById("sugLocal").value.trim(),
+                    telefone:             document.getElementById("sugTelefone").value.trim(),
+                    website:              document.getElementById("sugWeb").value.trim(),
+                    website_booking:      document.getElementById("sugBooking").value.trim(),
+                    categoria_atividade:  document.getElementById("sugCategoria").value.trim(),
+                    alerta:               document.getElementById("sugAlerta").value.trim(),
+                    email:                document.getElementById("sugEmail").value.trim(),
                 })
             });
             const dados = await res.json();

@@ -130,7 +130,7 @@
                 return `
                     <table>
                         <thead>
-                            <tr><th>ID</th><th>Tipo</th><th>Nome</th><th>Descrição</th><th>Localização</th><th>Website</th><th>Email</th><th>Data</th><th>Ação</th></tr>
+                            <tr><th>ID</th><th>Tipo</th><th>Nome</th><th>Descrição</th><th>Localização</th><th>Telefone</th><th>Site oficial</th><th>Booking</th><th>Categoria/Alerta</th><th>Email</th><th>Data</th><th>Ação</th></tr>
                         </thead>
                         <tbody>
                             ${sugestoes.map(s => `
@@ -140,7 +140,10 @@
                                     <td><strong>${texto(s.nome)}</strong></td>
                                     <td><pre>${texto(s.descricao)}</pre></td>
                                     <td>${texto(s.localizacao || "-")}</td>
+                                    <td>${texto(s.telefone || "-")}</td>
                                     <td>${s.website ? `<a href="${texto(s.website)}" target="_blank">link</a>` : "-"}</td>
+                                    <td>${s.website_booking ? `<a href="${texto(s.website_booking)}" target="_blank">booking</a>` : "-"}</td>
+                                    <td>${texto(s.categoria_atividade || s.alerta || "-")}</td>
                                     <td>${texto(s.email_sugestor || "-")}</td>
                                     <td>${texto(s.criado_em)}</td>
                                     <td class="acao-col">
