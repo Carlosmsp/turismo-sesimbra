@@ -506,6 +506,81 @@ def obter_dados_projeto() -> dict:
     }
 
 
+def aplicar_sugestao_na_base(conn: sqlite3.Connection, sugestao: sqlite3.Row) -> None:
+    tipo = sugestao["tipo"]
+    nome = sugestao["nome"].strip()
+    descricao = sugestao["descricao"].strip()
+    localizacao = str(sugestao.get("localizacao") or "").strip()
+    telefone = str(sugestao.get("telefone") or "").strip()
+    website = str(sugestao.get("website") or "").strip()
+    website_booking = str(sugestao.get("website_booking") or "").strip()
+    categoria_atividade = str(sugestao.get("categoria_atividade") or "").strip() or "outros"
+    categoria_turistica = str(sugestao.get("categoria_turistica") or "").strip() or "outros"
+    alerta = str(sugestao.get("alerta") or "").strip()
+
+    if tipo == "ponto":
+        descricao_base = descricao
+        if localizacao:
+            descricao_base += f" Localização: {localizacao}."
+        if alerta:
+            descricao_base += f" Aviso: {alerta}."
+
+        existente = conn.execute(
+            "SELECT 1 FROM pontos_interesse WHERE nome = ? LIMIT 1",
+            (nome,),
+        ).fetchone()
+        if existente:
+            return
+
+        conn.execute(
+            "INSERT INTO pontos_interesse (nome, descricao, categoria, imagem, lat, lon, tempo_minutos, custo_estimado, aviso) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (nome, descricao_base, categoria_turistica, None, None, None, 90, 0, alerta or None),
+        )
+        return
+
+    if tipo == "atividade":
+        existente = conn.execute(
+            "SELECT 1 FROM atividades WHERE nome = ? LIMIT 1",
+            (nome,),
+        ).fetchone()
+        if existente:
+            return
+
+        conn.execute(
+            "INSERT INTO atividades (nome, categoria, descricao) VALUES (?, ?, ?)",
+            (nome, categoria_atividade, descricao),
+        )
+        return
+
+    if tipo == "gastronomia":
+        existente = conn.execute(
+            "SELECT 1 FROM restaurantes WHERE nome = ? LIMIT 1",
+            (nome,),
+        ).fetchone()
+        if existente:
+            return
+
+        conn.execute(
+            "INSERT INTO restaurantes (nome, tipo, local, imagem, telefone, email) VALUES (?, ?, ?, ?, ?, ?)",
+            (nome, "Gastronomia", localizacao or "", None, telefone or None, str(sugestao.get("email_sugestor") or "").strip() or None),
+        )
+        return
+
+    if tipo == "alojamento":
+        existente = conn.execute(
+            "SELECT 1 FROM alojamentos WHERE nome = ? LIMIT 1",
+            (nome,),
+        ).fetchone()
+        if existente:
+            return
+
+        conn.execute(
+            "INSERT INTO alojamentos (nome, descricao, imagem, site_url, booking_url) VALUES (?, ?, ?, ?, ?)",
+            (nome, descricao, None, website or None, website_booking or None),
+        )
+        return
+
+
 def init_sugestoes_db() -> None:
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute(
@@ -1208,8 +1283,21 @@ def api_admin_sugestoes_estado(sid):
     novo_estado = str(dados.get("estado", "")).strip()
     if novo_estado not in ("aprovado", "rejeitado"):
         return jsonify({"erro": "Estado inválido."}), 400
+
     with sqlite3.connect(DB_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        sugestao = conn.execute(
+            "SELECT * FROM sugestoes WHERE id = ?",
+            (sid,),
+        ).fetchone()
+        if not sugestao:
+            return jsonify({"erro": "Sugestão não encontrada."}), 404
+
+        if novo_estado == "aprovado":
+            aplicar_sugestao_na_base(conn, sugestao)
+
         conn.execute("UPDATE sugestoes SET estado = ? WHERE id = ?", (novo_estado, sid))
+
     return jsonify({"estado": "ok"})
 
 

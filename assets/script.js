@@ -11,6 +11,7 @@ const pontosTuristicosLista = [
     {
         "id": 1,
         "title": "Castelo de Sesimbra",
+        "categoria": "monumentos",
         "description": "O Castelo de Sesimbra, situado no topo de uma colina, oferece vistas panorâmicas deslumbrantes da vila e do oceano.",
         "image": "img/Castelo_Sesimbra.jpg",
         "altImage": "Castelo de Sesimbra visto do alto",
@@ -61,6 +62,7 @@ const pontosTuristicosLista = [
     {
         "id": 5,
         "title": "Cabo Espichel",
+        "categoria": "monumentos",
         "description": "O Cabo Espichel é um ponto de vista deslumbrante que oferece vistas panorâmicas da costa e do oceano.",
         "image": "img/Cabo-Espichel.jpg",
         "altImage": "Cabo Espichel",
@@ -88,6 +90,7 @@ const pontosTuristicosLista = [
      {
         "id": 7,
         "title": "Pegadas de Dinossauros em Sesimbra",
+        "categoria": "monumentos",
         "description": "Pegadas na Pedreira do Avelino, a Pedra da Mua e os Lagosteiros, e outros locais com trilhas para explorar e descobrir vestígios de dinossauros.",
         "image": "img/Pegadas-Dinossauro-Meco.jpg",
         "altImage": "Pegadas de Dinossauros da Pedreira do Avelino, a Pedra da Mua e os Lagosteiros"
@@ -1236,11 +1239,12 @@ function filtrarPorNome() {
 function classificarPonto(p) {
     if (p.categoria) return p.categoria;
     const texto = ((p.title || "") + " " + (p.description || "")).toLowerCase();
+    if (texto.includes("castelo") || texto.includes("forte") || texto.includes("museu") || texto.includes("santuário") || texto.includes("santuario") || texto.includes("pegadas") || texto.includes("dinossauro") || texto.includes("farol")) return "monumentos";
     if (texto.includes("praia")) return "praia";
     if (texto.includes("cabo") || texto.includes("porto") || texto.includes("mar") || texto.includes("oceano") || texto.includes("baía") || texto.includes("baia")) return "mar";
     if (texto.includes("arrábida") || texto.includes("serra") || texto.includes("mont")) return "serra";
     if (texto.includes("camp") || texto.includes("lagoa") || texto.includes("parque") || texto.includes("fazenda") || texto.includes("quinta")) return "campo";
-    if (texto.includes("castelo") || texto.includes("forte") || texto.includes("museu") || texto.includes("centro") || texto.includes("vila") || texto.includes("ruas")) return "cidade";
+    if (texto.includes("centro") || texto.includes("vila") || texto.includes("ruas")) return "cidade";
     return "outros";
 }
 const gastroCard = document.getElementById("gastroCard");
@@ -1704,6 +1708,7 @@ function criarFiltroCategorias() {
         { val: "todos", label: "Todos" },
         { val: "mar", label: "Mar" },
         { val: "praia", label: "Praia" },
+        { val: "monumentos", label: "Monumentos" },
         { val: "campo", label: "Campo" },
         { val: "serra", label: "Serra" },
         { val: "cidade", label: "Cidade" },
