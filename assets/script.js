@@ -1733,46 +1733,78 @@ function criarResumoCustos(pontos) {
     return div;
 }
 
-const ICONES_TIPO = { ponto: "📍", atividade: "🏄", gastronomia: "🍽️", alojamento: "🏨" };
+const IMG_PADRAO = {
+    alojamento: "img/porto-de-abrigo.jpg",
+    gastronomia: "img/casa-mateus-sesimbra.jpg",
+    ponto:       "img/Castelo_Sesimbra.jpg",
+};
 
-function criaSugestaoCard(s) {
-    const elemArt = document.createElement("article");
-    elemArt.classList.add("sugestao-card-comunidade");
-
+function adicionarBadgeComunidade(card) {
+    card.classList.add("card-comunidade");
+    card.style.position = "relative";
     const badge = document.createElement("span");
     badge.className = "badge-comunidade";
     badge.textContent = "💡 Comunidade";
-
-    const icone = document.createElement("span");
-    icone.className = "atividade-icone";
-    icone.textContent = ICONES_TIPO[s.tipo] || "💡";
-
-    const h3 = document.createElement("h3");
-    h3.textContent = s.nome;
-
-    const p = document.createElement("p");
-    p.textContent = s.descricao;
-
-    elemArt.appendChild(badge);
-    elemArt.appendChild(icone);
-    elemArt.appendChild(h3);
-    elemArt.appendChild(p);
-
-    if (s.localizacao) {
-        const loc = document.createElement("p");
-        loc.innerHTML = `<small>📍 ${s.localizacao}</small>`;
-        elemArt.appendChild(loc);
-    }
-    if (s.website) {
-        const a = document.createElement("a");
-        a.href = s.website;
-        a.target = "_blank";
-        a.rel = "noopener noreferrer";
-        a.textContent = "Ver website";
-        elemArt.appendChild(a);
-    }
-    return elemArt;
+    card.insertBefore(badge, card.firstChild);
 }
+
+function criaSugestaoAlojamento(s) {
+    const card = criaHospedagem({
+        title: s.nome,
+        description: s.descricao + (s.localizacao ? ` — ${s.localizacao}` : ""),
+        image: IMG_PADRAO.alojamento,
+        altImage: s.nome,
+        link: {
+            name: s.website ? "Ver website" : "Pesquisar",
+            url: s.website || `https://www.google.com/search?q=${encodeURIComponent(s.nome + " Sesimbra")}`
+        }
+    });
+    adicionarBadgeComunidade(card);
+    return card;
+}
+
+function criaSugestaoGastronomia(s) {
+    const card = criaRestaurante({
+        title: s.nome,
+        tipo: s.localizacao || "Sesimbra",
+        local: "Sesimbra",
+        image: IMG_PADRAO.gastronomia,
+        phone: null,
+        email: null
+    });
+    adicionarBadgeComunidade(card);
+    return card;
+}
+
+function criaSugestaoAtividade(s) {
+    const card = criaActividade({
+        title: s.nome,
+        categoria: "outros",
+        icone: "💡",
+        description: s.descricao,
+        links: s.website ? [{ name: "Mais informações", url: s.website }] : []
+    });
+    adicionarBadgeComunidade(card);
+    return card;
+}
+
+function criaSugestaoPonto(s) {
+    const card = criaPonto({
+        title: s.nome,
+        description: s.descricao,
+        image: IMG_PADRAO.ponto,
+        altImage: s.nome
+    });
+    adicionarBadgeComunidade(card);
+    return card;
+}
+
+const CRIADORES_SUGESTAO = {
+    alojamento: criaSugestaoAlojamento,
+    gastronomia: criaSugestaoGastronomia,
+    atividade: criaSugestaoAtividade,
+    ponto: criaSugestaoPonto
+};
 
 async function carregarSugestoesAprovadas(tipo, container) {
     if (!container) return;
@@ -1787,7 +1819,8 @@ async function carregarSugestoesAprovadas(tipo, container) {
         separador.textContent = "Sugestões da comunidade";
         container.appendChild(separador);
 
-        lista.forEach(s => container.appendChild(criaSugestaoCard(s)));
+        const criar = CRIADORES_SUGESTAO[tipo];
+        if (criar) lista.forEach(s => container.appendChild(criar(s)));
     } catch { /* silent */ }
 }
 

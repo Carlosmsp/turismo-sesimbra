@@ -1031,15 +1031,8 @@ body.darkMode {
     padding-top: 0.75rem;
     margin: 0.5rem 0 0;
 }
-.sugestao-card-comunidade {
-    background: var(--branco-quente);
-    border: 1.5px dashed var(--ouro);
-    border-radius: var(--radius-lg);
-    padding: 1.4rem;
-    flex: 1 1 270px;
-    box-shadow: var(--sombra);
-    position: relative;
-    animation: fadeUp 0.5s ease both;
+.card-comunidade {
+    border: 1.5px dashed var(--ouro) !important;
 }
 .badge-comunidade {
     position: absolute;
@@ -1052,8 +1045,8 @@ body.darkMode {
     letter-spacing: 0.05em;
     padding: 0.15rem 0.55rem;
     border-radius: 50px;
+    z-index: 1;
 }
-.darkMode .sugestao-card-comunidade { background: #1b2535; }
 .darkMode #formSugestao select { background: #131d2b; color: var(--texto); border-color: rgba(255,255,255,0.12); }
 .botao-navegar {
     display: inline-block;
