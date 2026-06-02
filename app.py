@@ -1149,6 +1149,21 @@ def api_sugestoes_criar():
     return jsonify({"estado": "ok", "mensagem": "Sugestão enviada. Obrigado!"}), 201
 
 
+@app.get("/api/sugestoes/aprovadas")
+def api_sugestoes_aprovadas():
+    tipo = request.args.get("tipo")
+    query = "SELECT * FROM sugestoes WHERE estado = 'aprovado'"
+    params: list = []
+    if tipo:
+        query += " AND tipo = ?"
+        params.append(tipo)
+    query += " ORDER BY id"
+    with sqlite3.connect(CONTACTOS_DB_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(query, params).fetchall()
+    return jsonify([dict(r) for r in rows])
+
+
 @app.route("/api/sugestoes", methods=["OPTIONS"])
 def api_sugestoes_options():
     return "", 204

@@ -1016,6 +1016,44 @@ body.darkMode {
 .sugestao-resposta.sucesso { color: #1a7a3a; }
 
 .darkMode .sugestao-modal { background: #1b2535; }
+
+/* ================================
+   CARDS DE COMUNIDADE
+================================ */
+.sugestoes-separador {
+    width: 100%;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ouro);
+    border-top: 1.5px dashed var(--borda);
+    padding-top: 0.75rem;
+    margin: 0.5rem 0 0;
+}
+.sugestao-card-comunidade {
+    background: var(--branco-quente);
+    border: 1.5px dashed var(--ouro);
+    border-radius: var(--radius-lg);
+    padding: 1.4rem;
+    flex: 1 1 270px;
+    box-shadow: var(--sombra);
+    position: relative;
+    animation: fadeUp 0.5s ease both;
+}
+.badge-comunidade {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: rgba(200,154,62,0.15);
+    color: var(--ouro);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 0.15rem 0.55rem;
+    border-radius: 50px;
+}
+.darkMode .sugestao-card-comunidade { background: #1b2535; }
 .darkMode #formSugestao select { background: #131d2b; color: var(--texto); border-color: rgba(255,255,255,0.12); }
 .botao-navegar {
     display: inline-block;

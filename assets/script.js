@@ -1733,6 +1733,71 @@ function criarResumoCustos(pontos) {
     return div;
 }
 
+const ICONES_TIPO = { ponto: "📍", atividade: "🏄", gastronomia: "🍽️", alojamento: "🏨" };
+
+function criaSugestaoCard(s) {
+    const elemArt = document.createElement("article");
+    elemArt.classList.add("sugestao-card-comunidade");
+
+    const badge = document.createElement("span");
+    badge.className = "badge-comunidade";
+    badge.textContent = "💡 Comunidade";
+
+    const icone = document.createElement("span");
+    icone.className = "atividade-icone";
+    icone.textContent = ICONES_TIPO[s.tipo] || "💡";
+
+    const h3 = document.createElement("h3");
+    h3.textContent = s.nome;
+
+    const p = document.createElement("p");
+    p.textContent = s.descricao;
+
+    elemArt.appendChild(badge);
+    elemArt.appendChild(icone);
+    elemArt.appendChild(h3);
+    elemArt.appendChild(p);
+
+    if (s.localizacao) {
+        const loc = document.createElement("p");
+        loc.innerHTML = `<small>📍 ${s.localizacao}</small>`;
+        elemArt.appendChild(loc);
+    }
+    if (s.website) {
+        const a = document.createElement("a");
+        a.href = s.website;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.textContent = "Ver website";
+        elemArt.appendChild(a);
+    }
+    return elemArt;
+}
+
+async function carregarSugestoesAprovadas(tipo, container) {
+    if (!container) return;
+    try {
+        const res = await fetch(`/api/sugestoes/aprovadas?tipo=${tipo}`);
+        if (!res.ok) return;
+        const lista = await res.json();
+        if (!lista.length) return;
+
+        const separador = document.createElement("p");
+        separador.className = "sugestoes-separador";
+        separador.textContent = "Sugestões da comunidade";
+        container.appendChild(separador);
+
+        lista.forEach(s => container.appendChild(criaSugestaoCard(s)));
+    } catch { /* silent */ }
+}
+
+function carregarTodasSugestoesAprovadas() {
+    carregarSugestoesAprovadas("alojamento", hospedagemCard);
+    carregarSugestoesAprovadas("gastronomia", gastroCard);
+    carregarSugestoesAprovadas("atividade", actividadeCard);
+    carregarSugestoesAprovadas("ponto", pontoCard);
+}
+
 function iniciarModalSugestao() {
     const TIPOS = [
         { val: "ponto",      label: "Ponto Turístico" },
@@ -1859,3 +1924,4 @@ ativarImagensEstaticas();
 protegerLinksExternos();
 iniciarAssistenteIA();
 iniciarModalSugestao();
+carregarTodasSugestoesAprovadas();
