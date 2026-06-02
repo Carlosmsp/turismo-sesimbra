@@ -465,13 +465,27 @@ def guardar_log_api(endpoint: str, modelo: str, pedido: dict, resposta: dict, pr
         )
 
 
+def _env(chave: str, default: str = "") -> str:
+    """Lê sempre o valor mais recente do .env (ignora cache do os.environ)."""
+    env_path = BASE_DIR / ".env"
+    if env_path.exists():
+        for linha in env_path.read_text(encoding="utf-8").splitlines():
+            linha = linha.strip()
+            if not linha or linha.startswith("#") or "=" not in linha:
+                continue
+            k, v = linha.split("=", 1)
+            if k.strip() == chave:
+                return v.strip().strip('"').strip("'")
+    return os.environ.get(chave, default)
+
+
 def enviar_email_resposta(para: str, nome: str, assunto: str, mensagem: str) -> tuple[bool, str]:
-    smtp_host = os.environ.get("EMAIL_SMTP_HOST", "")
-    smtp_port = int(os.environ.get("EMAIL_SMTP_PORT", "587"))
-    email_user = os.environ.get("EMAIL_USER", "")
-    email_pass = os.environ.get("EMAIL_PASS", "")
-    email_from = os.environ.get("EMAIL_FROM", email_user)
-    from_name = os.environ.get("EMAIL_FROM_NAME", "Sesimbra - Guia de Viagem")
+    smtp_host = _env("EMAIL_SMTP_HOST")
+    smtp_port = int(_env("EMAIL_SMTP_PORT") or "587")
+    email_user = _env("EMAIL_USER")
+    email_pass = _env("EMAIL_PASS")
+    email_from = _env("EMAIL_FROM") or email_user
+    from_name = _env("EMAIL_FROM_NAME") or "Sesimbra - Guia de Viagem"
 
     if not all([smtp_host, email_user, email_pass]):
         return False, "Configuração SMTP em falta (EMAIL_SMTP_HOST, EMAIL_USER, EMAIL_PASS no .env)."
@@ -1353,13 +1367,18 @@ def api_sugestoes_criar():
     imagens = dados.get("imagens") if isinstance(dados.get("imagens"), list) else []
     criado_em = datetime.now().astimezone().isoformat(timespec="seconds")
     with sqlite3.connect(DB_PATH) as conn:
-        conn.execute(
+        conn.row_factory = sqlite3.Row
+        cursor = conn.execute(
             """INSERT INTO sugestoes
-            (tipo, nome, descricao, localizacao, telefone, website, website_booking, categoria_atividade, categoria_turistica, alerta, imagens, email_sugestor, criado_em)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (tipo, nome, descricao, localizacao, telefone, website, website_booking, categoria_atividade, categoria_turistica, alerta, imagens, email_sugestor, estado, criado_em)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,'aprovado',?)""",
             (tipo, nome, descricao, localizacao or None, telefone or None, website or None,
-             website_booking or None, categoria_atividade or None, categoria_turistica or None, alerta or None, json.dumps(imagens), email_sugestor or None, criado_em)
+             website_booking or None, categoria_atividade or None, categoria_turistica or None,
+             alerta or None, json.dumps(imagens), email_sugestor or None, criado_em),
         )
+        sugestao = conn.execute("SELECT * FROM sugestoes WHERE id = ?", (cursor.lastrowid,)).fetchone()
+        aplicar_sugestao_na_base(conn, sugestao)
+        conn.commit()
     return jsonify({"estado": "ok", "mensagem": "Sugestão enviada. Obrigado!"}), 201
 
 
