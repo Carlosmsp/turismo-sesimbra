@@ -946,12 +946,26 @@ body.darkMode {
 
 @media (max-width: 760px) {
     .nav-cta-buttons {
-        flex-direction: column;
-        align-items: stretch;
+        /* Mantém os botões em linha mesmo em ecrãs pequenos */
+        flex-direction: row;
+        flex-wrap: nowrap;
+        justify-content: space-between;
+        gap: 0.5rem;
+        align-items: center;
     }
     .nav-cta-buttons .assistente-ia,
     .nav-cta-buttons .botao-sugerir {
-        width: 100%;
+        width: auto;
+        flex: 0 0 auto;
+    }
+    /* Ajustes visuais para caber em larguras muito pequenas */
+    .assistente-toggle {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.7rem;
+    }
+    .botao-sugerir {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.7rem;
     }
 }
 
