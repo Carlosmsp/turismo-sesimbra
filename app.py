@@ -1533,6 +1533,18 @@ def api_admin_sugestoes():
     return jsonify([dict(r) for r in rows])
 
 
+@app.get("/api/admin/sugestoes/todas")
+def api_admin_sugestoes_todas():
+    if not validar_admin_token():
+        return jsonify({"erro": "Acesso não autorizado."}), 401
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            "SELECT * FROM sugestoes ORDER BY id DESC"
+        ).fetchall()
+    return jsonify([dict(r) for r in rows])
+
+
 @app.post("/api/admin/sugestoes/<int:sid>/estado")
 def api_admin_sugestoes_estado(sid):
     if not validar_admin_token():

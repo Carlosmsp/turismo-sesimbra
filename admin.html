@@ -30,12 +30,6 @@
 
     <main>
         <p id="adminStatus" class="admin-status">A carregar dados...</p>
-        <div style="margin-bottom:1rem;">
-            <a id="btnDadosExtras" href="#" style="display:inline-block;padding:0.45rem 1rem;background:#0f2342;color:#fff;border-radius:6px;font-size:0.82rem;font-weight:600;text-decoration:none;">
-                ⬇ Descarregar dados_extras.json
-            </a>
-            <small style="color:#64748b;margin-left:0.6rem;">Após aprovar sugestões, descarregue este ficheiro e faça commit ao git para que os dados persistam no próximo deploy.</small>
-        </div>
         <div class="admin-grid">
             <section class="admin-panel">
                 <h2>Contactos</h2>
@@ -48,7 +42,13 @@
             </section>
 
             <section class="admin-panel">
-                <h2 id="sugestoesTitulo">Sugestões Pendentes</h2>
+                <h2 id="sugestoesTitulo">Sugestões — Histórico</h2>
+                <div style="margin-bottom:0.75rem;display:flex;gap:0.4rem;flex-wrap:wrap;">
+                    <button class="filtro-sug filtro-ativo" data-estado="todos">Todas</button>
+                    <button class="filtro-sug" data-estado="pendente">Pendentes</button>
+                    <button class="filtro-sug" data-estado="aprovado">Aprovadas</button>
+                    <button class="filtro-sug" data-estado="rejeitado">Rejeitadas</button>
+                </div>
                 <div id="sugestoesTabela" class="admin-table-wrap"></div>
             </section>
         </div>
@@ -133,12 +133,24 @@
         .edit-resposta.sucesso, .resp-resposta.sucesso { background: #efe; color: #060; display: block; }
     </style>
 
+    <style>
+        .filtro-sug { padding:0.25rem 0.7rem; border-radius:20px; border:1.5px solid #0f2342; background:#fff; color:#0f2342; font-size:0.8rem; font-weight:600; cursor:pointer; }
+        .filtro-sug.filtro-ativo { background:#0f2342; color:#fff; }
+        .badge-pendente { color:#b45309; font-weight:700; }
+        .badge-aprovado { color:#1a7a3a; font-weight:700; }
+        .badge-rejeitado { color:#b00020; font-weight:700; }
+    </style>
+
     <script>
         (function () {
             const token = new URLSearchParams(window.location.search).get("token") || "";
-            const status = document.getElementById("adminStatus");
+            const statusEl = document.getElementById("adminStatus");
             const contactosTabela = document.getElementById("contactosTabela");
             const logsTabela = document.getElementById("logsTabela");
+            const sugestoesTabela = document.getElementById("sugestoesTabela");
+
+            let todasSugestoes = [];
+            let filtroAtivo = "todos";
 
             function texto(valor) {
                 return String(valor ?? "")
@@ -149,163 +161,140 @@
                     .replace(/'/g, "&#039;");
             }
 
+            /* ── CONTACTOS ─────────────────────────────────── */
             function tabelaContactos(contactos) {
                 if (!contactos.length) return '<p class="admin-empty">Ainda não há contactos guardados.</p>';
-
-                return `
-                    <table>
-                        <thead>
-                            <tr><th>ID</th><th>Nome</th><th>Email</th><th>Telefone</th><th>Mensagem recebida</th><th>Data</th><th>Estado</th><th>Resposta enviada</th><th>Ação</th></tr>
-                        </thead>
-                        <tbody>
-                            ${contactos.map(c => `
-                                <tr id="cont-${texto(c.id)}" ${c.respondido ? 'style="background:#f0fff4;"' : ''}>
-                                    <td>${texto(c.id)}</td>
-                                    <td>${texto(c.nome)}</td>
-                                    <td>${texto(c.email)}</td>
-                                    <td>${texto(c.telefone || "-")}</td>
-                                    <td><pre>${texto(c.mensagem)}</pre></td>
-                                    <td>${texto(c.criado_em)}</td>
-                                    <td>${c.respondido
-                                        ? '<span style="color:#1a7a3a;font-weight:700;">✓ Respondido</span>'
-                                        : '<span style="color:#b45309;font-weight:600;">● Pendente</span>'}</td>
-                                    <td>${c.resp_mensagem
-                                        ? `<strong>${texto(c.resp_assunto)}</strong><br><pre style="max-width:22rem;white-space:pre-wrap;">${texto(c.resp_mensagem)}</pre><small style="color:#64748b;">${texto(c.resp_em || "")}</small>`
-                                        : '<span style="color:#aaa;">—</span>'}</td>
-                                    <td><button class="btn-responder" data-id="${texto(c.id)}" data-nome="${texto(c.nome)}" data-email="${texto(c.email)}">${c.respondido ? '↩ Responder de novo' : '💬 Responder'}</button></td>
-                                </tr>
-                            `).join("")}
-                        </tbody>
-                    </table>
-                `;
+                return `<table>
+                    <thead><tr><th>ID</th><th>Nome</th><th>Email</th><th>Telefone</th><th>Mensagem</th><th>Data</th><th>Estado</th><th>Resposta enviada</th><th>Ação</th></tr></thead>
+                    <tbody>${contactos.map(c => `
+                        <tr id="cont-${texto(c.id)}" ${c.respondido ? 'style="background:#f0fff4"' : ''}>
+                            <td>${texto(c.id)}</td>
+                            <td>${texto(c.nome)}</td>
+                            <td>${texto(c.email)}</td>
+                            <td>${texto(c.telefone || "-")}</td>
+                            <td><pre>${texto(c.mensagem)}</pre></td>
+                            <td>${texto(c.criado_em)}</td>
+                            <td>${c.respondido
+                                ? '<span class="badge-aprovado">✓ Respondido</span>'
+                                : '<span class="badge-pendente">● Pendente</span>'}</td>
+                            <td>${c.resp_mensagem
+                                ? `<strong>${texto(c.resp_assunto)}</strong><br><pre style="max-width:22rem">${texto(c.resp_mensagem)}</pre><small style="color:#64748b">${texto(c.resp_em||"")}</small>`
+                                : '<span style="color:#aaa">—</span>'}</td>
+                            <td><button class="btn-responder" data-id="${texto(c.id)}" data-nome="${texto(c.nome)}" data-email="${texto(c.email)}">${c.respondido ? '↩ Responder de novo' : '💬 Responder'}</button></td>
+                        </tr>`).join("")}
+                    </tbody></table>`;
             }
 
+            /* ── LOGS ──────────────────────────────────────── */
             function tabelaLogs(logs) {
                 if (!logs.length) return '<p class="admin-empty">Ainda não há logs guardados.</p>';
-
-                return `
-                    <table>
-                        <thead>
-                            <tr><th>ID</th><th>Data</th><th>Endpoint</th><th>Estado</th><th>Resposta</th></tr>
-                        </thead>
-                        <tbody>
-                            ${logs.map(log => `
-                                <tr>
-                                    <td>${texto(log.id)}</td>
-                                    <td>${texto(log.created_at)}</td>
-                                    <td>${texto(log.endpoint)}</td>
-                                    <td>${texto(log.estado)}</td>
-                                    <td><pre>${texto(log.resposta_text || "")}</pre></td>
-                                </tr>
-                            `).join("")}
-                        </tbody>
-                    </table>
-                `;
+                return `<table>
+                    <thead><tr><th>ID</th><th>Data</th><th>Endpoint</th><th>Estado</th><th>Resposta</th></tr></thead>
+                    <tbody>${logs.map(l => `
+                        <tr>
+                            <td>${texto(l.id)}</td>
+                            <td>${texto(l.created_at)}</td>
+                            <td>${texto(l.endpoint)}</td>
+                            <td>${texto(l.estado)}</td>
+                            <td><pre>${texto(l.resposta_text || "")}</pre></td>
+                        </tr>`).join("")}
+                    </tbody></table>`;
             }
 
-            const TIPO_LABEL = { ponto: "Ponto Turístico", atividade: "Atividade", gastronomia: "Gastronomia", alojamento: "Alojamento" };
+            /* ── SUGESTÕES ─────────────────────────────────── */
+            const TIPO_LABEL = { ponto:"Ponto Turístico", atividade:"Atividade", gastronomia:"Gastronomia", alojamento:"Alojamento" };
+            const ESTADO_BADGE = { pendente:'<span class="badge-pendente">● Pendente</span>', aprovado:'<span class="badge-aprovado">✓ Aprovado</span>', rejeitado:'<span class="badge-rejeitado">✗ Rejeitado</span>' };
 
             function fotosSugestao(imagens_json) {
                 try {
                     const imgs = JSON.parse(imagens_json || "[]");
-                    if (!imgs.length) return '<span style="color:#aaa;">sem foto</span>';
-                    return imgs.map(src =>
-                        `<img src="${src}" style="max-width:80px;max-height:60px;border-radius:4px;object-fit:cover;margin:1px;cursor:pointer;"
-                              onclick="window.open('${src}','_blank')" title="Ver foto original">`
-                    ).join("");
-                } catch { return '<span style="color:#aaa;">sem foto</span>'; }
+                    if (!imgs.length) return '<span style="color:#aaa">sem foto</span>';
+                    return imgs.map(src => `<img src="${src}" style="max-width:80px;max-height:60px;border-radius:4px;object-fit:cover;margin:1px;cursor:pointer" onclick="window.open('${src}','_blank')">`).join("");
+                } catch { return '<span style="color:#aaa">sem foto</span>'; }
             }
 
-            function tabelaSugestoes(sugestoes) {
-                if (!sugestoes.length) return '<p class="admin-empty">Nenhuma sugestão pendente.</p>';
-                return `
-                    <table>
-                        <thead>
-                            <tr><th>ID</th><th>Tipo</th><th>Nome</th><th>Fotos</th><th>Descrição</th><th>Localização</th><th>Telefone</th><th>Site oficial</th><th>Booking</th><th>Categoria/Alerta</th><th>Email</th><th>Data</th><th>Ação</th></tr>
-                        </thead>
-                        <tbody>
-                            ${sugestoes.map(s => `
-                                <tr id="sug-${texto(s.id)}">
-                                    <td>${texto(s.id)}</td>
-                                    <td>${texto(TIPO_LABEL[s.tipo] || s.tipo)}</td>
-                                    <td><strong>${texto(s.nome)}</strong></td>
-                                    <td>${fotosSugestao(s.imagens)}</td>
-                                    <td><pre>${texto(s.descricao)}</pre></td>
-                                    <td>${texto(s.localizacao || "-")}</td>
-                                    <td>${texto(s.telefone || "-")}</td>
-                                    <td>${s.website ? `<a href="${texto(s.website)}" target="_blank">link</a>` : "-"}</td>
-                                    <td>${s.website_booking ? `<a href="${texto(s.website_booking)}" target="_blank">booking</a>` : "-"}</td>
-                                    <td>${texto(s.categoria_atividade || s.alerta || "-")}</td>
-                                    <td>${texto(s.email_sugestor || "-")}</td>
-                                    <td>${texto(s.criado_em)}</td>
-                                    <td class="acao-col">
-                                        <button class="btn-editar" data-id="${texto(s.id)}" data-tipo="${texto(s.tipo)}">✏️ Editar</button>
-                                        <button class="btn-aprovar" data-id="${texto(s.id)}">✓ Aprovar</button>
-                                        <button class="btn-rejeitar" data-id="${texto(s.id)}">✗ Rejeitar</button>
-                                    </td>
-                                </tr>
-                            `).join("")}
-                        </tbody>
-                    </table>
-                `;
+            function tabelaSugestoes(lista) {
+                if (!lista.length) return '<p class="admin-empty">Nenhuma sugestão encontrada.</p>';
+                return `<table>
+                    <thead><tr><th>ID</th><th>Estado</th><th>Tipo</th><th>Nome</th><th>Fotos</th><th>Descrição</th><th>Localização</th><th>Telefone</th><th>Site</th><th>Booking</th><th>Categoria/Alerta</th><th>Email</th><th>Data</th><th>Ação</th></tr></thead>
+                    <tbody>${lista.map(s => `
+                        <tr id="sug-${texto(s.id)}" ${s.estado==='aprovado' ? 'style="background:#f0fff4"' : s.estado==='rejeitado' ? 'style="background:#fff5f5"' : ''}>
+                            <td>${texto(s.id)}</td>
+                            <td>${ESTADO_BADGE[s.estado] || texto(s.estado)}</td>
+                            <td>${texto(TIPO_LABEL[s.tipo] || s.tipo)}</td>
+                            <td><strong>${texto(s.nome)}</strong></td>
+                            <td>${fotosSugestao(s.imagens)}</td>
+                            <td><pre>${texto(s.descricao)}</pre></td>
+                            <td>${texto(s.localizacao || "-")}</td>
+                            <td>${texto(s.telefone || "-")}</td>
+                            <td>${s.website ? `<a href="${texto(s.website)}" target="_blank">link</a>` : "-"}</td>
+                            <td>${s.website_booking ? `<a href="${texto(s.website_booking)}" target="_blank">booking</a>` : "-"}</td>
+                            <td>${texto(s.categoria_atividade || s.alerta || "-")}</td>
+                            <td>${texto(s.email_sugestor || "-")}</td>
+                            <td>${texto(s.criado_em)}</td>
+                            <td class="acao-col">
+                                <button class="btn-editar" data-id="${texto(s.id)}" data-tipo="${texto(s.tipo)}"
+                                    data-nome="${texto(s.nome)}" data-desc="${texto(s.descricao)}"
+                                    data-local="${texto(s.localizacao||"")}" data-tel="${texto(s.telefone||"")}"
+                                    data-web="${texto(s.website||"")}" data-booking="${texto(s.website_booking||"")}"
+                                    data-alerta="${texto(s.alerta||"")}">✏️ Editar</button>
+                                ${s.estado === 'pendente' ? `
+                                <button class="btn-aprovar" data-id="${texto(s.id)}">✓ Aprovar</button>
+                                <button class="btn-rejeitar" data-id="${texto(s.id)}">✗ Rejeitar</button>` : ''}
+                            </td>
+                        </tr>`).join("")}
+                    </tbody></table>`;
             }
 
+            function renderSugestoes() {
+                const lista = filtroAtivo === "todos" ? todasSugestoes : todasSugestoes.filter(s => s.estado === filtroAtivo);
+                sugestoesTabela.innerHTML = tabelaSugestoes(lista);
+                const pendentes = todasSugestoes.filter(s => s.estado === "pendente").length;
+                document.getElementById("sugestoesTitulo").textContent =
+                    `Sugestões — Histórico${pendentes ? ` (${pendentes} pendentes)` : ""}`;
+            }
+
+            /* ── AÇÕES ─────────────────────────────────────── */
             async function mudarEstadoSugestao(id, estado) {
-                try {
-                    const res = await fetch(`/api/admin/sugestoes/${id}/estado?token=${encodeURIComponent(token)}`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json", "X-Admin-Token": token },
-                        body: JSON.stringify({ estado })
-                    });
-                    if (res.ok) {
-                        const linha = document.getElementById(`sug-${id}`);
-                        if (linha) linha.remove();
-                    } else {
-                        const erro = await res.json();
-                        alert("Erro: " + (erro.erro || "Não foi possível atualizar a sugestão."));
-                    }
-                } catch (e) {
-                    alert("Erro de conexão: " + e.message);
+                const res = await fetch(`/api/admin/sugestoes/${id}/estado?token=${encodeURIComponent(token)}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "X-Admin-Token": token },
+                    body: JSON.stringify({ estado })
+                });
+                if (res.ok) {
+                    const sug = todasSugestoes.find(s => String(s.id) === String(id));
+                    if (sug) sug.estado = estado;
+                    renderSugestoes();
+                } else {
+                    const erro = await res.json().catch(() => ({}));
+                    alert("Erro: " + (erro.erro || "Não foi possível atualizar."));
                 }
             }
 
-            async function abrirEditarSugestao(id, tipo) {
-                const modal = document.getElementById("modalEditarSugestao");
-                const form = document.getElementById("formEditarSugestao");
-                document.getElementById("editId").value = id;
-                document.getElementById("editTipo").textContent = TIPO_LABEL[tipo] || tipo;
+            function abrirEditarSugestao(btn) {
+                document.getElementById("editId").value = btn.dataset.id;
+                document.getElementById("editTipo").textContent = TIPO_LABEL[btn.dataset.tipo] || btn.dataset.tipo;
+                document.getElementById("editNome").value = btn.dataset.nome || "";
+                document.getElementById("editDesc").value = btn.dataset.desc || "";
+                document.getElementById("editLocal").value = btn.dataset.local || "";
+                document.getElementById("editTel").value = btn.dataset.tel || "";
+                document.getElementById("editWeb").value = btn.dataset.web || "";
+                document.getElementById("editBooking").value = btn.dataset.booking || "";
+                document.getElementById("editAlerta").value = btn.dataset.alerta || "";
                 document.getElementById("editResp").className = "edit-resposta";
                 document.getElementById("editResp").textContent = "";
-                
-                const linha = document.getElementById(`sug-${id}`);
-                if (linha) {
-                    const cells = linha.querySelectorAll("td");
-                    document.getElementById("editNome").value = cells[2]?.textContent.trim() || "";
-                    document.getElementById("editDesc").value = cells[3]?.textContent.trim() || "";
-                    document.getElementById("editLocal").value = cells[4]?.textContent.trim() || "";
-                    document.getElementById("editTel").value = cells[5]?.textContent.trim() || "";
-                    
-                    const linkSite = cells[6]?.querySelector("a");
-                    document.getElementById("editWeb").value = linkSite?.href || "";
-                    
-                    const linkBooking = cells[7]?.querySelector("a");
-                    document.getElementById("editBooking").value = linkBooking?.href || "";
-                    
-                    document.getElementById("editAlerta").value = cells[8]?.textContent.trim() || "";
-                }
-                modal.classList.remove("oculto");
+                document.getElementById("modalEditarSugestao").classList.remove("oculto");
             }
 
-            async function abrirResponderContacto(id, nome, email) {
-                const modal = document.getElementById("modalResponderContacto");
-                document.getElementById("respContactoId").value = id;
-                document.getElementById("respPara").textContent = nome;
-                document.getElementById("respEmail").textContent = email;
+            function abrirResponderContacto(btn) {
+                document.getElementById("respContactoId").value = btn.dataset.id;
+                document.getElementById("respPara").textContent = btn.dataset.nome;
+                document.getElementById("respEmail").textContent = btn.dataset.email;
                 document.getElementById("respAssunto").value = "";
                 document.getElementById("respMensagem").value = "";
                 document.getElementById("respResp").className = "resp-resposta";
                 document.getElementById("respResp").textContent = "";
-                modal.classList.remove("oculto");
+                document.getElementById("modalResponderContacto").classList.remove("oculto");
             }
 
             async function enviarResposta() {
@@ -313,42 +302,22 @@
                 const assunto = document.getElementById("respAssunto").value.trim();
                 const mensagem = document.getElementById("respMensagem").value.trim();
                 const respDiv = document.getElementById("respResp");
-                
-                if (!assunto || !mensagem) {
-                    respDiv.className = "resp-resposta erro";
-                    respDiv.textContent = "Preenche assunto e mensagem.";
-                    return;
-                }
-
+                if (!assunto || !mensagem) { respDiv.className = "resp-resposta erro"; respDiv.textContent = "Preenche assunto e mensagem."; return; }
                 const btn = document.querySelector("#formResponderContacto button[type=submit]");
-                btn.disabled = true;
-                btn.textContent = "A enviar...";
-
+                btn.disabled = true; btn.textContent = "A enviar...";
                 try {
                     const res = await fetch(`/api/admin/contactos/${id}/responder?token=${encodeURIComponent(token)}`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json", "X-Admin-Token": token },
+                        method: "POST", headers: { "Content-Type": "application/json", "X-Admin-Token": token },
                         body: JSON.stringify({ assunto, mensagem })
                     });
                     const dados = await res.json();
                     if (res.ok) {
                         respDiv.className = "resp-resposta sucesso";
                         respDiv.textContent = "✓ " + (dados.mensagem || "Resposta guardada!");
-                        setTimeout(() => {
-                            document.getElementById("modalResponderContacto").classList.add("oculto");
-                            carregar();
-                        }, 2000);
-                    } else {
-                        respDiv.className = "resp-resposta erro";
-                        respDiv.textContent = "Erro: " + (dados.erro || "Não foi possível enviar.");
-                    }
-                } catch (e) {
-                    respDiv.className = "resp-resposta erro";
-                    respDiv.textContent = "Erro de conexão: " + e.message;
-                } finally {
-                    btn.disabled = false;
-                    btn.textContent = "Enviar resposta";
-                }
+                        setTimeout(() => { document.getElementById("modalResponderContacto").classList.add("oculto"); carregar(); }, 2000);
+                    } else { respDiv.className = "resp-resposta erro"; respDiv.textContent = "Erro: " + (dados.erro || "Não foi possível enviar."); }
+                } catch (e) { respDiv.className = "resp-resposta erro"; respDiv.textContent = "Erro de conexão: " + e.message; }
+                finally { btn.disabled = false; btn.textContent = "Enviar resposta"; }
             }
 
             async function enviarEdicao() {
@@ -356,134 +325,89 @@
                 const nome = document.getElementById("editNome").value.trim();
                 const descricao = document.getElementById("editDesc").value.trim();
                 const respDiv = document.getElementById("editResp");
-                
-                if (!nome || !descricao) {
-                    respDiv.className = "edit-resposta erro";
-                    respDiv.textContent = "Preenche nome e descrição.";
-                    return;
-                }
-
+                if (!nome || !descricao) { respDiv.className = "edit-resposta erro"; respDiv.textContent = "Preenche nome e descrição."; return; }
                 const btn = document.querySelector("#formEditarSugestao button[type=submit]");
-                btn.disabled = true;
-                btn.textContent = "A guardar...";
-
+                btn.disabled = true; btn.textContent = "A guardar...";
                 try {
                     const res = await fetch(`/api/admin/sugestoes/${id}?token=${encodeURIComponent(token)}`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json", "X-Admin-Token": token },
-                        body: JSON.stringify({
-                            nome,
-                            descricao,
+                        method: "POST", headers: { "Content-Type": "application/json", "X-Admin-Token": token },
+                        body: JSON.stringify({ nome, descricao,
                             localizacao: document.getElementById("editLocal").value.trim(),
                             telefone: document.getElementById("editTel").value.trim(),
                             website: document.getElementById("editWeb").value.trim(),
                             website_booking: document.getElementById("editBooking").value.trim(),
-                            alerta: document.getElementById("editAlerta").value.trim()
-                        })
+                            alerta: document.getElementById("editAlerta").value.trim() })
                     });
                     const dados = await res.json();
                     if (res.ok) {
-                        respDiv.className = "edit-resposta sucesso";
-                        respDiv.textContent = "✓ Alterações guardadas!";
-                        setTimeout(() => {
-                            document.getElementById("modalEditarSugestao").classList.add("oculto");
-                            carregar();
-                        }, 1500);
-                    } else {
-                        respDiv.className = "edit-resposta erro";
-                        respDiv.textContent = "Erro: " + (dados.erro || "Não foi possível guardar.");
-                    }
-                } catch (e) {
-                    respDiv.className = "edit-resposta erro";
-                    respDiv.textContent = "Erro de conexão: " + e.message;
-                } finally {
-                    btn.disabled = false;
-                    btn.textContent = "Guardar alterações";
-                }
+                        respDiv.className = "edit-resposta sucesso"; respDiv.textContent = "✓ Alterações guardadas!";
+                        setTimeout(() => { document.getElementById("modalEditarSugestao").classList.add("oculto"); carregar(); }, 1500);
+                    } else { respDiv.className = "edit-resposta erro"; respDiv.textContent = "Erro: " + (dados.erro || "Não foi possível guardar."); }
+                } catch (e) { respDiv.className = "edit-resposta erro"; respDiv.textContent = "Erro de conexão: " + e.message; }
+                finally { btn.disabled = false; btn.textContent = "Guardar alterações"; }
             }
 
+            /* ── CARREGAR ──────────────────────────────────── */
             async function carregar() {
-                if (!token) {
-                    status.textContent = "Token em falta no link.";
-                    return;
-                }
+                if (!token) { statusEl.textContent = "Token em falta no URL (?token=...)."; return; }
 
-                const [contactosResp, logsResp, sugestoesResp] = await Promise.all([
+                statusEl.textContent = "A carregar dados...";
+
+                const [cRes, lRes, sRes] = await Promise.all([
                     fetch(`/api/admin/contactos?token=${encodeURIComponent(token)}`),
                     fetch(`/api/logs?token=${encodeURIComponent(token)}`),
-                    fetch(`/api/admin/sugestoes?token=${encodeURIComponent(token)}&estado=pendente`)
+                    fetch(`/api/admin/sugestoes/todas?token=${encodeURIComponent(token)}`)
                 ]);
 
-                if (!contactosResp.ok || !logsResp.ok) {
-                    status.textContent = "Acesso não autorizado.";
+                if (cRes.status === 401 || lRes.status === 401) {
+                    statusEl.textContent = "Acesso não autorizado — verifique o token no URL.";
                     return;
                 }
 
-                const contactos = await contactosResp.json();
-                const logs = await logsResp.json();
-                const sugestoes = sugestoesResp.ok ? await sugestoesResp.json() : [];
+                if (cRes.ok) contactosTabela.innerHTML = tabelaContactos(await cRes.json());
+                else contactosTabela.innerHTML = `<p class="admin-empty">Erro ao carregar contactos (${cRes.status}).</p>`;
 
-                contactosTabela.innerHTML = tabelaContactos(contactos);
-                logsTabela.innerHTML = tabelaLogs(logs);
+                if (lRes.ok) logsTabela.innerHTML = tabelaLogs(await lRes.json());
+                else logsTabela.innerHTML = `<p class="admin-empty">Erro ao carregar logs (${lRes.status}).</p>`;
 
-                const sugestoesTabela = document.getElementById("sugestoesTabela");
-                if (sugestoesTabela) {
-                    sugestoesTabela.innerHTML = tabelaSugestoes(sugestoes);
-                    sugestoesTabela.addEventListener("click", function (e) {
-                        const btn = e.target.closest("[data-id]");
-                        if (!btn) return;
-                        const id = btn.dataset.id;
-                        if (btn.classList.contains("btn-aprovar")) mudarEstadoSugestao(id, "aprovado");
-                        if (btn.classList.contains("btn-rejeitar")) mudarEstadoSugestao(id, "rejeitado");
-                        if (btn.classList.contains("btn-editar")) abrirEditarSugestao(id, btn.dataset.tipo);
-                    });
-                }
+                todasSugestoes = sRes.ok ? await sRes.json() : [];
+                renderSugestoes();
 
-                contactosTabela.addEventListener("click", function (e) {
-                    const btn = e.target.closest(".btn-responder");
-                    if (!btn) return;
-                    abrirResponderContacto(btn.dataset.id, btn.dataset.nome, btn.dataset.email);
-                });
-
-                const pendentes = sugestoes.length;
-                const titulo = document.getElementById("sugestoesTitulo");
-                if (titulo) titulo.textContent = `Sugestões Pendentes${pendentes ? ` (${pendentes})` : ""}`;
-
-                status.textContent = "Dados carregados com sucesso.";
+                statusEl.textContent = "Dados carregados com sucesso.";
             }
 
-            // Botão download dados_extras.json
-            const btnExtras = document.getElementById("btnDadosExtras");
-            if (btnExtras && token) {
-                btnExtras.href = `/api/admin/dados-extras?token=${encodeURIComponent(token)}`;
-            }
+            /* ── EVENT LISTENERS (uma só vez) ──────────────── */
+            document.querySelectorAll(".modal-fechar").forEach(b => b.addEventListener("click", function () {
+                this.closest(".modal-overlay").classList.add("oculto");
+            }));
+            document.querySelectorAll(".modal-overlay").forEach(m => m.addEventListener("click", function (e) {
+                if (e.target === this) this.classList.add("oculto");
+            }));
+            document.getElementById("formEditarSugestao").addEventListener("submit", e => { e.preventDefault(); enviarEdicao(); });
+            document.getElementById("formResponderContacto").addEventListener("submit", e => { e.preventDefault(); enviarResposta(); });
 
-            // Event listeners para modais
-            document.querySelectorAll(".modal-fechar").forEach(btn => {
-                btn.addEventListener("click", function () {
-                    this.closest(".modal-overlay").classList.add("oculto");
-                });
+            sugestoesTabela.addEventListener("click", function (e) {
+                const btn = e.target.closest("[data-id]");
+                if (!btn) return;
+                const id = btn.dataset.id;
+                if (btn.classList.contains("btn-aprovar")) mudarEstadoSugestao(id, "aprovado");
+                else if (btn.classList.contains("btn-rejeitar")) mudarEstadoSugestao(id, "rejeitado");
+                else if (btn.classList.contains("btn-editar")) abrirEditarSugestao(btn);
             });
 
-            document.querySelectorAll(".modal-overlay").forEach(modal => {
-                modal.addEventListener("click", function (e) {
-                    if (e.target === this) this.classList.add("oculto");
-                });
+            contactosTabela.addEventListener("click", function (e) {
+                const btn = e.target.closest(".btn-responder");
+                if (btn) abrirResponderContacto(btn);
             });
 
-            document.getElementById("formEditarSugestao").addEventListener("submit", async (e) => {
-                e.preventDefault();
-                await enviarEdicao();
-            });
+            document.querySelectorAll(".filtro-sug").forEach(b => b.addEventListener("click", function () {
+                document.querySelectorAll(".filtro-sug").forEach(x => x.classList.remove("filtro-ativo"));
+                this.classList.add("filtro-ativo");
+                filtroAtivo = this.dataset.estado;
+                renderSugestoes();
+            }));
 
-            document.getElementById("formResponderContacto").addEventListener("submit", async (e) => {
-                e.preventDefault();
-                await enviarResposta();
-            });
-
-            carregar().catch(function () {
-                status.textContent = "Não foi possível carregar os dados.";
-            });
+            carregar().catch(() => { statusEl.textContent = "Não foi possível carregar os dados."; });
         }());
     </script>
 </body>
