@@ -1850,10 +1850,12 @@ function adicionarBadgeComunidade(card) {
 }
 
 function criaSugestaoAlojamento(s) {
+    let imagemAloj = IMG_PADRAO.alojamento;
+    try { const imgs = JSON.parse(s.imagens || "[]"); if (imgs.length > 0) imagemAloj = imgs[0]; } catch {}
     const card = criaHospedagem({
         title: s.nome,
         description: s.descricao + (s.localizacao ? ` — ${s.localizacao}` : ""),
-        image: IMG_PADRAO.alojamento,
+        image: imagemAloj,
         altImage: s.nome,
         link: {
             name: s.website ? "Ver website" : "Pesquisar",
@@ -1865,11 +1867,13 @@ function criaSugestaoAlojamento(s) {
 }
 
 function criaSugestaoGastronomia(s) {
+    let imagemGastro = IMG_PADRAO.gastronomia;
+    try { const imgs = JSON.parse(s.imagens || "[]"); if (imgs.length > 0) imagemGastro = imgs[0]; } catch {}
     const card = criaRestaurante({
         title: s.nome,
         tipo: s.localizacao || "Sesimbra",
         local: "Sesimbra",
-        image: IMG_PADRAO.gastronomia,
+        image: imagemGastro,
         phone: null,
         email: null
     });
@@ -1890,10 +1894,15 @@ function criaSugestaoAtividade(s) {
 }
 
 function criaSugestaoPonto(s) {
+    let imagem = IMG_PADRAO.ponto;
+    try {
+        const imgs = JSON.parse(s.imagens || "[]");
+        if (imgs.length > 0) imagem = imgs[0];
+    } catch {}
     const card = criaPonto({
         title: s.nome,
         description: s.descricao,
-        image: IMG_PADRAO.ponto,
+        image: imagem,
         altImage: s.nome
     });
     adicionarBadgeComunidade(card);
