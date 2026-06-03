@@ -569,8 +569,9 @@ def enviar_email_resposta(para: str, nome: str, assunto: str, mensagem: str) -> 
     email_from = _env("EMAIL_FROM") or email_user
     from_name = _env("EMAIL_FROM_NAME") or "Sesimbra - Guia de Viagem"
 
-    if not all([smtp_host, email_user, email_pass]):
-        return False, "Configuração SMTP em falta (EMAIL_SMTP_HOST, EMAIL_USER, EMAIL_PASS no .env)."
+    em_falta = [n for n, v in [("EMAIL_SMTP_HOST", smtp_host), ("EMAIL_USER", email_user), ("EMAIL_PASS", email_pass)] if not v]
+    if em_falta:
+        return False, f"Preencha no .env: {', '.join(em_falta)}"
 
     try:
         msg = MIMEMultipart("alternative")
