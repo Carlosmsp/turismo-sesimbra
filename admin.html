@@ -30,6 +30,12 @@
 
     <main>
         <p id="adminStatus" class="admin-status">A carregar dados...</p>
+        <div style="margin-bottom:1rem;">
+            <a id="btnDadosExtras" href="#" style="display:inline-block;padding:0.45rem 1rem;background:#0f2342;color:#fff;border-radius:6px;font-size:0.82rem;font-weight:600;text-decoration:none;">
+                ⬇ Descarregar dados_extras.json
+            </a>
+            <small style="color:#64748b;margin-left:0.6rem;">Após aprovar sugestões, descarregue este ficheiro e faça commit ao git para que os dados persistam no próximo deploy.</small>
+        </div>
         <div class="admin-grid">
             <section class="admin-panel">
                 <h2>Contactos</h2>
@@ -199,12 +205,23 @@
 
             const TIPO_LABEL = { ponto: "Ponto Turístico", atividade: "Atividade", gastronomia: "Gastronomia", alojamento: "Alojamento" };
 
+            function fotosSugestao(imagens_json) {
+                try {
+                    const imgs = JSON.parse(imagens_json || "[]");
+                    if (!imgs.length) return '<span style="color:#aaa;">sem foto</span>';
+                    return imgs.map(src =>
+                        `<img src="${src}" style="max-width:80px;max-height:60px;border-radius:4px;object-fit:cover;margin:1px;cursor:pointer;"
+                              onclick="window.open('${src}','_blank')" title="Ver foto original">`
+                    ).join("");
+                } catch { return '<span style="color:#aaa;">sem foto</span>'; }
+            }
+
             function tabelaSugestoes(sugestoes) {
                 if (!sugestoes.length) return '<p class="admin-empty">Nenhuma sugestão pendente.</p>';
                 return `
                     <table>
                         <thead>
-                            <tr><th>ID</th><th>Tipo</th><th>Nome</th><th>Descrição</th><th>Localização</th><th>Telefone</th><th>Site oficial</th><th>Booking</th><th>Categoria/Alerta</th><th>Email</th><th>Data</th><th>Ação</th></tr>
+                            <tr><th>ID</th><th>Tipo</th><th>Nome</th><th>Fotos</th><th>Descrição</th><th>Localização</th><th>Telefone</th><th>Site oficial</th><th>Booking</th><th>Categoria/Alerta</th><th>Email</th><th>Data</th><th>Ação</th></tr>
                         </thead>
                         <tbody>
                             ${sugestoes.map(s => `
@@ -212,6 +229,7 @@
                                     <td>${texto(s.id)}</td>
                                     <td>${texto(TIPO_LABEL[s.tipo] || s.tipo)}</td>
                                     <td><strong>${texto(s.nome)}</strong></td>
+                                    <td>${fotosSugestao(s.imagens)}</td>
                                     <td><pre>${texto(s.descricao)}</pre></td>
                                     <td>${texto(s.localizacao || "-")}</td>
                                     <td>${texto(s.telefone || "-")}</td>
@@ -432,6 +450,12 @@
                 if (titulo) titulo.textContent = `Sugestões Pendentes${pendentes ? ` (${pendentes})` : ""}`;
 
                 status.textContent = "Dados carregados com sucesso.";
+            }
+
+            // Botão download dados_extras.json
+            const btnExtras = document.getElementById("btnDadosExtras");
+            if (btnExtras && token) {
+                btnExtras.href = `/api/admin/dados-extras?token=${encodeURIComponent(token)}`;
             }
 
             // Event listeners para modais

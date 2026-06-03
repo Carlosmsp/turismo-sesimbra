@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import json
 import math
 import os
@@ -23,8 +24,9 @@ from flask import Flask, jsonify, request, send_from_directory
 BASE_DIR = Path(__file__).resolve().parent
 _DATA_DIR = Path("/data") if Path("/data").exists() else BASE_DIR
 DB_PATH = _DATA_DIR / "sesimbra.db"
-DB_PATH = DB_PATH
-DADOS_EXTRAS_PATH = BASE_DIR / "dados_extras.json"
+# dados_extras.json no volume persistente; fallback para o ficheiro git como semente inicial
+DADOS_EXTRAS_PATH = _DATA_DIR / "dados_extras.json"
+_DADOS_EXTRAS_SEED = BASE_DIR / "dados_extras.json"
 GEMINI_MODEL = "gemini-2.5-flash"
 app = Flask(__name__, static_folder=None)
 ALLOWED_ORIGINS = {
@@ -310,13 +312,15 @@ oficiais, apresentar valores como estimativas.
 
 
 def ler_dados_extras() -> dict:
-    """Lê o ficheiro dados_extras.json que persiste sugestões aprovadas entre deployments."""
-    if not DADOS_EXTRAS_PATH.exists():
-        return {"pontos_interesse": [], "restaurantes": [], "alojamentos": [], "atividades": []}
-    try:
-        return json.loads(DADOS_EXTRAS_PATH.read_text(encoding="utf-8"))
-    except Exception:
-        return {"pontos_interesse": [], "restaurantes": [], "alojamentos": [], "atividades": []}
+    """Lê dados_extras.json do volume persistente; na primeira vez usa o ficheiro git como semente."""
+    _vazio: dict = {"pontos_interesse": [], "restaurantes": [], "alojamentos": [], "atividades": []}
+    for caminho in (DADOS_EXTRAS_PATH, _DADOS_EXTRAS_SEED):
+        if caminho.exists():
+            try:
+                return json.loads(caminho.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+    return _vazio
 
 
 def guardar_sugestao_em_extras(sugestao: dict) -> None:
@@ -657,6 +661,28 @@ def obter_dados_projeto() -> dict:
     }
 
 
+def guardar_imagem_sugestao(nome: str, imagens_json: str) -> str | None:
+    """Guarda a primeira imagem base64 de uma sugestão em disco. Retorna o caminho relativo."""
+    try:
+        imagens = json.loads(imagens_json or "[]")
+        if not imagens:
+            return None
+        data_url = imagens[0]
+        match = re.match(r"data:image/(\w+);base64,(.+)", data_url, re.DOTALL)
+        if not match:
+            return None
+        ext = match.group(1).lower()
+        if ext not in ("jpg", "jpeg", "png", "webp", "gif"):
+            ext = "jpg"
+        dados_img = base64.b64decode(match.group(2))
+        safe_nome = re.sub(r"[^a-z0-9]", "_", nome.lower())[:40]
+        caminho_relativo = f"img/sug_{safe_nome}.{ext}"
+        (BASE_DIR / caminho_relativo).write_bytes(dados_img)
+        return caminho_relativo
+    except Exception:
+        return None
+
+
 def aplicar_sugestao_na_base(conn: sqlite3.Connection, sugestao: sqlite3.Row) -> None:
     sugestao = dict(sugestao)
     tipo = sugestao["tipo"]
@@ -669,6 +695,7 @@ def aplicar_sugestao_na_base(conn: sqlite3.Connection, sugestao: sqlite3.Row) ->
     categoria_atividade = str(sugestao.get("categoria_atividade") or "").strip() or "outros"
     categoria_turistica = str(sugestao.get("categoria_turistica") or "").strip() or "outros"
     alerta = str(sugestao.get("alerta") or "").strip()
+    imagem_path = guardar_imagem_sugestao(nome, sugestao.get("imagens") or "[]")
 
     if tipo == "ponto":
         descricao_base = descricao
@@ -678,15 +705,21 @@ def aplicar_sugestao_na_base(conn: sqlite3.Connection, sugestao: sqlite3.Row) ->
             descricao_base += f" Aviso: {alerta}."
 
         existente = conn.execute(
-            "SELECT 1 FROM pontos_interesse WHERE nome = ? LIMIT 1",
+            "SELECT id, imagem FROM pontos_interesse WHERE nome = ? LIMIT 1",
             (nome,),
         ).fetchone()
         if existente:
+            # Entrada já existe: actualiza imagem se o visitante submeteu uma nova
+            if imagem_path:
+                conn.execute(
+                    "UPDATE pontos_interesse SET imagem = ? WHERE id = ?",
+                    (imagem_path, existente[0]),
+                )
             return
 
         conn.execute(
             "INSERT INTO pontos_interesse (nome, descricao, categoria, imagem, lat, lon, tempo_minutos, custo_estimado, aviso) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (nome, descricao_base, categoria_turistica, None, None, None, 90, 0, alerta or None),
+            (nome, descricao_base, categoria_turistica, imagem_path, None, None, 90, 0, alerta or None),
         )
         return
 
@@ -706,29 +739,39 @@ def aplicar_sugestao_na_base(conn: sqlite3.Connection, sugestao: sqlite3.Row) ->
 
     if tipo == "gastronomia":
         existente = conn.execute(
-            "SELECT 1 FROM restaurantes WHERE nome = ? LIMIT 1",
+            "SELECT id, imagem FROM restaurantes WHERE nome = ? LIMIT 1",
             (nome,),
         ).fetchone()
         if existente:
+            if imagem_path:
+                conn.execute(
+                    "UPDATE restaurantes SET imagem = ? WHERE id = ?",
+                    (imagem_path, existente[0]),
+                )
             return
 
         conn.execute(
             "INSERT INTO restaurantes (nome, tipo, local, imagem, telefone, email) VALUES (?, ?, ?, ?, ?, ?)",
-            (nome, "Gastronomia", localizacao or "", None, telefone or None, str(sugestao.get("email_sugestor") or "").strip() or None),
+            (nome, "Gastronomia", localizacao or "", imagem_path, telefone or None, str(sugestao.get("email_sugestor") or "").strip() or None),
         )
         return
 
     if tipo == "alojamento":
         existente = conn.execute(
-            "SELECT 1 FROM alojamentos WHERE nome = ? LIMIT 1",
+            "SELECT id, imagem FROM alojamentos WHERE nome = ? LIMIT 1",
             (nome,),
         ).fetchone()
         if existente:
+            if imagem_path:
+                conn.execute(
+                    "UPDATE alojamentos SET imagem = ? WHERE id = ?",
+                    (imagem_path, existente[0]),
+                )
             return
 
         conn.execute(
             "INSERT INTO alojamentos (nome, descricao, imagem, site_url, booking_url) VALUES (?, ?, ?, ?, ?)",
-            (nome, descricao, None, website or None, website_booking or None),
+            (nome, descricao, imagem_path, website or None, website_booking or None),
         )
         return
 
@@ -1550,6 +1593,20 @@ def api_admin_sugestoes_atualizar(sid):
         return jsonify({"erro": f"Erro ao atualizar: {str(e)}"}), 500
 
     return jsonify({"estado": "ok"})
+
+
+@app.get("/api/admin/dados-extras")
+def api_admin_dados_extras():
+    """Devolve o dados_extras.json actual para download/commit ao git."""
+    if not validar_admin_token():
+        return jsonify({"erro": "Acesso não autorizado."}), 401
+    dados = ler_dados_extras()
+    from flask import Response
+    return Response(
+        json.dumps(dados, ensure_ascii=False, indent=2),
+        mimetype="application/json",
+        headers={"Content-Disposition": "attachment; filename=dados_extras.json"},
+    )
 
 
 @app.get("/")
