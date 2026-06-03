@@ -1004,6 +1004,7 @@ function criaPonto(p) {
     elemP.textContent = p.description;
     elemImg.src = p.image;
     elemImg.alt = p.altImage;
+    elemImg.loading = "lazy";
     prepararImagemAmpliavel(elemImg);
 
     elemArt.appendChild(elemImg);
@@ -1184,6 +1185,7 @@ function criaHospedagem(p) {
     elemH3.textContent = p.title;
     elemImg.src = `${p.image}?v=${versaoImagensHospedagem}`;
     elemImg.alt = p.altImage;
+    elemImg.loading = "lazy";
     prepararImagemAmpliavel(elemImg);
     elemP.textContent = p.description;
 
@@ -1269,6 +1271,7 @@ function criaRestaurante(r) {
     const elemImg = document.createElement("img");
     elemImg.src = `${r.image}?v=${versaoImagensGastronomia}`;
     elemImg.alt = r.title;
+    elemImg.loading = "lazy";
     prepararImagemAmpliavel(elemImg);
 
     const phone = r.phone || `+351 21 200 00${String(r.id).padStart(2, '0')}`;
@@ -1992,10 +1995,12 @@ function iniciarModalSugestao() {
                     <label for="sugCategoriaTuristica">Classificação do ponto</label>
                     <select id="sugCategoriaTuristica" name="categoria_turistica">
                         <option value="">-- Escolhe uma classificação --</option>
-                        <option value="mar">Mar</option>
+                        <option value="monumentos">Monumentos</option>
                         <option value="praia">Praia</option>
-                        <option value="campo">Campo</option>
+                        <option value="mar">Mar</option>
+                        <option value="natureza">Natureza</option>
                         <option value="serra">Serra</option>
+                        <option value="campo">Campo</option>
                         <option value="cidade">Cidade</option>
                         <option value="outros">Outros</option>
                     </select>
