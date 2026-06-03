@@ -24,6 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent
 _DATA_DIR = Path("/data") if Path("/data").exists() else BASE_DIR
 DB_PATH = _DATA_DIR / "sesimbra.db"
 DB_PATH = DB_PATH
+DADOS_EXTRAS_PATH = BASE_DIR / "dados_extras.json"
 GEMINI_MODEL = "gemini-2.5-flash"
 app = Flask(__name__, static_folder=None)
 ALLOWED_ORIGINS = {
@@ -308,6 +309,81 @@ oficiais, apresentar valores como estimativas.
 """
 
 
+def ler_dados_extras() -> dict:
+    """Lê o ficheiro dados_extras.json que persiste sugestões aprovadas entre deployments."""
+    if not DADOS_EXTRAS_PATH.exists():
+        return {"pontos_interesse": [], "restaurantes": [], "alojamentos": [], "atividades": []}
+    try:
+        return json.loads(DADOS_EXTRAS_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return {"pontos_interesse": [], "restaurantes": [], "alojamentos": [], "atividades": []}
+
+
+def guardar_sugestao_em_extras(sugestao: dict) -> None:
+    """Guarda uma sugestão aprovada no ficheiro dados_extras.json (commited no git)."""
+    dados = ler_dados_extras()
+    tipo = sugestao.get("tipo", "")
+    nome = str(sugestao.get("nome", "")).strip()
+    descricao = str(sugestao.get("descricao", "")).strip()
+    localizacao = str(sugestao.get("localizacao") or "").strip()
+    telefone = str(sugestao.get("telefone") or "").strip()
+    website = str(sugestao.get("website") or "").strip()
+    website_booking = str(sugestao.get("website_booking") or "").strip()
+    cat_atividade = str(sugestao.get("categoria_atividade") or "").strip() or "outros"
+    cat_turistica = str(sugestao.get("categoria_turistica") or "").strip() or "outros"
+    alerta = str(sugestao.get("alerta") or "").strip()
+
+    if tipo == "ponto" and not any(p["nome"] == nome for p in dados["pontos_interesse"]):
+        dados["pontos_interesse"].append({
+            "nome": nome, "descricao": descricao, "categoria": cat_turistica,
+            "imagem": None, "lat": None, "lon": None,
+            "tempo_minutos": 90, "custo_estimado": 0, "aviso": alerta or None,
+        })
+    elif tipo == "atividade" and not any(a["nome"] == nome for a in dados["atividades"]):
+        dados["atividades"].append({"nome": nome, "categoria": cat_atividade, "descricao": descricao})
+    elif tipo == "gastronomia" and not any(r["nome"] == nome for r in dados["restaurantes"]):
+        dados["restaurantes"].append({
+            "nome": nome, "tipo": "Gastronomia", "local": localizacao or "",
+            "imagem": None, "telefone": telefone or None, "email": None,
+        })
+    elif tipo == "alojamento" and not any(a["nome"] == nome for a in dados["alojamentos"]):
+        dados["alojamentos"].append({
+            "nome": nome, "descricao": descricao, "imagem": None,
+            "site_url": website or None, "booking_url": website_booking or None,
+        })
+    DADOS_EXTRAS_PATH.write_text(json.dumps(dados, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def aplicar_dados_extras_na_db(conn: sqlite3.Connection) -> None:
+    """Re-aplica os dados_extras.json à BD — garante persistência após novo deployment."""
+    dados = ler_dados_extras()
+    for p in dados.get("pontos_interesse", []):
+        if not conn.execute("SELECT 1 FROM pontos_interesse WHERE nome = ? LIMIT 1", (p["nome"],)).fetchone():
+            conn.execute(
+                "INSERT INTO pontos_interesse (nome, descricao, categoria, imagem, lat, lon, tempo_minutos, custo_estimado, aviso) VALUES (?,?,?,?,?,?,?,?,?)",
+                (p["nome"], p["descricao"], p.get("categoria", "outros"), p.get("imagem"),
+                 p.get("lat"), p.get("lon"), p.get("tempo_minutos", 90), p.get("custo_estimado", 0), p.get("aviso")),
+            )
+    for r in dados.get("restaurantes", []):
+        if not conn.execute("SELECT 1 FROM restaurantes WHERE nome = ? LIMIT 1", (r["nome"],)).fetchone():
+            conn.execute(
+                "INSERT INTO restaurantes (nome, tipo, local, imagem, telefone, email) VALUES (?,?,?,?,?,?)",
+                (r["nome"], r.get("tipo", ""), r.get("local", ""), r.get("imagem"), r.get("telefone"), r.get("email")),
+            )
+    for a in dados.get("alojamentos", []):
+        if not conn.execute("SELECT 1 FROM alojamentos WHERE nome = ? LIMIT 1", (a["nome"],)).fetchone():
+            conn.execute(
+                "INSERT INTO alojamentos (nome, descricao, imagem, site_url, booking_url) VALUES (?,?,?,?,?)",
+                (a["nome"], a.get("descricao", ""), a.get("imagem"), a.get("site_url"), a.get("booking_url")),
+            )
+    for at in dados.get("atividades", []):
+        if not conn.execute("SELECT 1 FROM atividades WHERE nome = ? LIMIT 1", (at["nome"],)).fetchone():
+            conn.execute(
+                "INSERT INTO atividades (nome, categoria, descricao) VALUES (?,?,?)",
+                (at["nome"], at.get("categoria", "outros"), at.get("descricao", "")),
+            )
+
+
 def init_contactos_db() -> None:
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute(
@@ -444,6 +520,8 @@ def init_db() -> None:
             )
             """
         )
+        aplicar_dados_extras_na_db(conn)
+        conn.commit()
 
 
 def guardar_log_api(endpoint: str, modelo: str, pedido: dict, resposta: dict, prompt: str, resposta_text: str, estado: str) -> None:
@@ -1367,18 +1445,14 @@ def api_sugestoes_criar():
     imagens = dados.get("imagens") if isinstance(dados.get("imagens"), list) else []
     criado_em = datetime.now().astimezone().isoformat(timespec="seconds")
     with sqlite3.connect(DB_PATH) as conn:
-        conn.row_factory = sqlite3.Row
-        cursor = conn.execute(
+        conn.execute(
             """INSERT INTO sugestoes
-            (tipo, nome, descricao, localizacao, telefone, website, website_booking, categoria_atividade, categoria_turistica, alerta, imagens, email_sugestor, estado, criado_em)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,'aprovado',?)""",
+            (tipo, nome, descricao, localizacao, telefone, website, website_booking, categoria_atividade, categoria_turistica, alerta, imagens, email_sugestor, criado_em)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (tipo, nome, descricao, localizacao or None, telefone or None, website or None,
              website_booking or None, categoria_atividade or None, categoria_turistica or None,
              alerta or None, json.dumps(imagens), email_sugestor or None, criado_em),
         )
-        sugestao = conn.execute("SELECT * FROM sugestoes WHERE id = ?", (cursor.lastrowid,)).fetchone()
-        aplicar_sugestao_na_base(conn, sugestao)
-        conn.commit()
     return jsonify({"estado": "ok", "mensagem": "Sugestão enviada. Obrigado!"}), 201
 
 
@@ -1438,6 +1512,7 @@ def api_admin_sugestoes_estado(sid):
             if novo_estado == "aprovado":
                 aplicar_sugestao_na_base(conn, sugestao)
                 conn.commit()
+                guardar_sugestao_em_extras(dict(sugestao))
 
             conn.execute("UPDATE sugestoes SET estado = ? WHERE id = ?", (novo_estado, sid))
             conn.commit()
