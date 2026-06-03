@@ -1744,7 +1744,7 @@ function criarFiltroCategorias() {
     sec.insertBefore(container, referencia);
 }
 
-criarFiltroCategorias();
+if (window.location.pathname.includes("pontos-turisticos")) criarFiltroCategorias();
 const PONTOS_GPS = {
     "Praia do Ouro":               "38.4438,-9.1052",
     "Castelo de Sesimbra":         "38.4517,-9.0973",
