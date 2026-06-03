@@ -1183,7 +1183,7 @@ function criaHospedagem(p) {
     const elemLinkBooking = document.createElement("a");
 
     elemH3.textContent = p.title;
-    elemImg.src = `${p.image}?v=${versaoImagensHospedagem}`;
+    elemImg.src = p.image && p.image.startsWith("data:") ? p.image : `${p.image}?v=${versaoImagensHospedagem}`;
     elemImg.alt = p.altImage;
     elemImg.loading = "lazy";
     prepararImagemAmpliavel(elemImg);
@@ -2155,6 +2155,12 @@ function iniciarModalSugestao() {
         }
         if (nome.length < 3) {
             camposFaltantes.push("nome");
+        }
+        const palavrasDesc = descricao.split(/\s+/).filter(Boolean);
+        if (palavrasDesc.length < 2) {
+            resp.textContent = "Na descrição não aceita apenas uma palavra (minimo 2).";
+            resp.classList.add("erro");
+            return;
         }
         if (descricao.length < 10) {
             camposFaltantes.push("descrição");
