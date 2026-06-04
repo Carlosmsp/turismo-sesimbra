@@ -2309,7 +2309,14 @@ window.addEventListener("resize", atualizarPosicaoBotaoDarkMode);
 addActividades();                   // Funçao para adicionar actividades
 addHospedagem();                   // Funçao para adicionar hospedagem
 
-atualizarInterface();   
+atualizarInterface();
+// Garantir que os filtros de pontos turísticos são criados imediatamente
+if (document.getElementById("filtroPontos")) {
+    criarFiltrosPontos();
+    aplicarFiltros();
+    addPontosTuristicos();
+}
+
 ativarImagensEstaticas();
 protegerLinksExternos();
 iniciarAssistenteIA();
