@@ -1808,9 +1808,6 @@ function criarFiltrosPontos() {
         filtroPontosContainer.appendChild(label);
     });
 }
-    });
-}
-
 // Criar UI de filtro por categorias na página de pontos turísticos - DEPRECATED
 function criarFiltroCategorias() {
     criarFiltrosPontos();
