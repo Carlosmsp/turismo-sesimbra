@@ -1066,6 +1066,8 @@ function obterCategoriasAtividadesUnicas() {
 function criarFiltrosAtividades() {
     if (!filtroAtividadesContainer) return;
     
+    filtroAtividadesContainer.replaceChildren();
+    
     const categorias = obterCategoriasAtividadesUnicas();
     
     categorias.forEach(categoria => {
@@ -1797,12 +1799,15 @@ function criarFiltrosPontos() {
             } else {
                 pontosCategoriasSelecionadas.delete(categoria);
             }
-            atualizarInterface();
+            aplicarFiltros();
+            addPontosTuristicos();
         });
         
         label.appendChild(checkbox);
         label.appendChild(document.createTextNode(categoria.charAt(0).toUpperCase() + categoria.slice(1)));
         filtroPontosContainer.appendChild(label);
+    });
+}
     });
 }
 
