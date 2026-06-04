@@ -22,12 +22,9 @@
         <div class="filtro-pesquisa">
             <input type="text" id="inputActividadesFiltro" placeholder="Pesquisar atividades..." aria-label="Pesquisar atividades">
         </div>
-        <div class="filtro-categorias">
-            <button type="button" class="btn-categoria ativo" data-categoria="todos" aria-pressed="true">Todos</button>
-            <button type="button" class="btn-categoria" data-categoria="agua" aria-pressed="false">Água</button>
-            <button type="button" class="btn-categoria" data-categoria="natureza" aria-pressed="false">Natureza</button>
-            <button type="button" class="btn-categoria" data-categoria="aventura" aria-pressed="false">Aventura</button>
-            <button type="button" class="btn-categoria" data-categoria="cultura" aria-pressed="false">Cultura</button>
+        <div id="filtroAtividadesContainer">
+            <h3>Filtrar por categoria:</h3>
+            <div id="filtroAtividades" class="filtro-tipos"></div>
         </div>
         <p class="filtro-resultado" id="actividadesResultado"></p>
     </div>

@@ -39,6 +39,7 @@ const pontosTuristicosLista = [
     {
         "id": 3,
         "title": "Parque Natural da Arrábida",
+        "categoria": "serra",
         "description": "Para os amantes da natureza, o Parque Natural da Arrábida é um paraíso de biodiversidade, com trilhas para caminhadas e praias isoladas.",
         "image": "img/parque_natural_da_arrabia.jpg",
         "altImage": "Parque Natural da Arrábida",
@@ -216,7 +217,7 @@ const actividadesLista = [
     {
         "id": 8,
         "title": "Serra da Arrábida",
-        "categoria": "natureza",
+        "categoria": "serra",
         "icone": "🌿",
         "description": "Trilhos, miradouros e natureza protegida num dos parques naturais mais bonitos de Portugal.",
         "links": [
@@ -495,6 +496,7 @@ const hospedagemCard = document.getElementById("hospedagemCard")
 let pontosFiltrados = pontosTuristicosLista;
 let telefoneInternacional = null;
 let pontosCategoriaSelecionada = "todos";
+let pontosCategoriasSelecionadas = new Set();
 
 if (inputTelefone && window.intlTelInput) {
     telefoneInternacional = window.intlTelInput(inputTelefone, {
@@ -1048,10 +1050,46 @@ const categoriaTextos = { agua: "Água", natureza: "Natureza", aventura: "Aventu
 
 let categoriaAtiva = "todos";
 let pesquisaAtividade = "";
+let atividadeCategoriasSelecionadas = new Set();
 
 const inputActividadesFiltro = document.getElementById("inputActividadesFiltro");
 const actividadesResultado = document.getElementById("actividadesResultado");
-const btnsCategorias = document.querySelectorAll(".btn-categoria");
+const filtroAtividadesContainer = document.getElementById("filtroAtividades");
+
+// Extrair categorias únicas de atividades
+function obterCategoriasAtividadesUnicas() {
+    const categorias = [...new Set(actividadesLista.map(a => a.categoria))];
+    return categorias.sort();
+}
+
+// Criar botões de filtro por categoria de atividades
+function criarFiltrosAtividades() {
+    if (!filtroAtividadesContainer) return;
+    
+    const categorias = obterCategoriasAtividadesUnicas();
+    
+    categorias.forEach(categoria => {
+        const label = document.createElement("label");
+        label.classList.add("filtro-tipo-label");
+        
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.value = categoria;
+        checkbox.classList.add("filtro-tipo-checkbox");
+        checkbox.addEventListener("change", (e) => {
+            if (e.target.checked) {
+                atividadeCategoriasSelecionadas.add(categoria);
+            } else {
+                atividadeCategoriasSelecionadas.delete(categoria);
+            }
+            atualizarAtividades();
+        });
+        
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(categoria.charAt(0).toUpperCase() + categoria.slice(1)));
+        filtroAtividadesContainer.appendChild(label);
+    });
+}
 
 if (inputActividadesFiltro) {
     inputActividadesFiltro.addEventListener("input", function () {
@@ -1060,30 +1098,22 @@ if (inputActividadesFiltro) {
     });
 }
 
-btnsCategorias.forEach(btn => {
-    btn.addEventListener("click", function () {
-        btnsCategorias.forEach(b => {
-            b.classList.remove("ativo");
-            b.setAttribute("aria-pressed", "false");
-        });
-        this.classList.add("ativo");
-        this.setAttribute("aria-pressed", "true");
-        categoriaAtiva = this.dataset.categoria;
-        atualizarAtividades();
-    });
-});
-
 function filtrarAtividades() {
     return actividadesLista.filter(a => {
-        const matchCategoria = categoriaAtiva === "todos" || a.categoria === categoriaAtiva;
+        // Filtro por categoria (se há categorias selecionadas, filtra; senão, mostra todas)
+        const temCategoriaSelecionada = atividadeCategoriasSelecionadas.size === 0 || atividadeCategoriasSelecionadas.has(a.categoria);
+        
+        // Filtro por pesquisa
         const matchPesquisa = pesquisaAtividade === "" ||
             a.title.toLowerCase().includes(pesquisaAtividade) ||
             a.description.toLowerCase().includes(pesquisaAtividade);
-        return matchCategoria && matchPesquisa;
+        
+        return temCategoriaSelecionada && matchPesquisa;
     });
 }
 
 function addActividades() {
+    criarFiltrosAtividades();
     atualizarAtividades();
 }
 
@@ -1725,70 +1755,60 @@ function iniciarAssistenteIA() {
 function aplicarFiltros() {
     // Filtrar por nome/entrada
     pontosFiltrados = filtrarPorNome();
-    // Filtrar por categoria se selecionada
-    if (pontosCategoriaSelecionada && pontosCategoriaSelecionada !== "todos") {
-        pontosFiltrados = pontosFiltrados.filter(p => classificarPonto(p) === pontosCategoriaSelecionada);
+    // Filtrar por categoria se houver categorias selecionadas
+    if (pontosCategoriasSelecionadas.size > 0) {
+        pontosFiltrados = pontosFiltrados.filter(p => pontosCategoriasSelecionadas.has(classificarPonto(p)));
     }
 }
 
 function atualizarInterface() {
+    if (!inputPontosFiltro) return;  // Só executar se estamos na página de pontos turísticos
+    criarFiltrosPontos();
     aplicarFiltros();
     addPontosTuristicos();
 }
 
-// Criar UI de filtro por categorias na página de pontos turísticos
-function criarFiltroCategorias() {
-    const sec = document.getElementById("pontos-turisticos");
-    if (!sec) return;
-    const container = document.createElement("div");
-    container.className = "atividades-filtros";
+// Extrair categorias únicas de pontos turísticos
+function obterCategoriasPontosUnicas() {
+    const categorias = [...new Set(pontosTuristicosLista.map(p => classificarPonto(p)))];
+    return categorias.sort();
+}
 
-    const filtroPesquisa = document.createElement("div");
-    filtroPesquisa.className = "filtro-pesquisa";
-
-    const input = document.getElementById('inputPontosFiltro');
-    if (input) {
-        filtroPesquisa.appendChild(input);
-    }
-
-    const botoes = document.createElement("div");
-    botoes.className = "filtro-categorias";
-
-    const categorias = [
-        { val: "todos", label: "Todos" },
-        { val: "mar", label: "Mar" },
-        { val: "praia", label: "Praia" },
-        { val: "monumentos", label: "Monumentos" },
-        { val: "campo", label: "Campo" },
-        { val: "serra", label: "Serra" },
-        { val: "cidade", label: "Cidade" },
-        { val: "outros", label: "Outros" }
-    ];
-    for (const c of categorias) {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = `btn-categoria ${c.val === "todos" ? "ativo" : ""}`.trim();
-        btn.dataset.categoria = c.val;
-        btn.setAttribute("aria-pressed", c.val === "todos" ? "true" : "false");
-        btn.textContent = c.label;
-        btn.addEventListener("click", function () {
-            botoes.querySelectorAll('.btn-categoria').forEach(b => {
-                b.classList.remove('ativo');
-                b.setAttribute('aria-pressed', 'false');
-            });
-            this.classList.add('ativo');
-            this.setAttribute('aria-pressed', 'true');
-            pontosCategoriaSelecionada = this.dataset.categoria;
+// Criar checkboxes de filtro por categoria de pontos turísticos
+function criarFiltrosPontos() {
+    const filtroPontosContainer = document.getElementById("filtroPontos");
+    if (!filtroPontosContainer) return;
+    
+    filtroPontosContainer.replaceChildren();
+    
+    const categorias = obterCategoriasPontosUnicas();
+    
+    categorias.forEach(categoria => {
+        const label = document.createElement("label");
+        label.classList.add("filtro-tipo-label");
+        
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.value = categoria;
+        checkbox.classList.add("filtro-tipo-checkbox");
+        checkbox.addEventListener("change", (e) => {
+            if (e.target.checked) {
+                pontosCategoriasSelecionadas.add(categoria);
+            } else {
+                pontosCategoriasSelecionadas.delete(categoria);
+            }
             atualizarInterface();
         });
-        botoes.appendChild(btn);
-    }
+        
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(categoria.charAt(0).toUpperCase() + categoria.slice(1)));
+        filtroPontosContainer.appendChild(label);
+    });
+}
 
-    container.appendChild(filtroPesquisa);
-    container.appendChild(botoes);
-
-    const referencia = sec.querySelector(".card") || sec.firstChild;
-    sec.insertBefore(container, referencia);
+// Criar UI de filtro por categorias na página de pontos turísticos - DEPRECATED
+function criarFiltroCategorias() {
+    criarFiltrosPontos();
 }
 
 if (window.location.pathname.includes("pontos-turisticos")) criarFiltroCategorias();
