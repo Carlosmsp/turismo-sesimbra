@@ -1652,6 +1652,85 @@ body.darkMode {
     color: var(--texto);
 }
 
+/* ================================
+   FILTROS DE GASTRONOMIA
+================================ */
+#filtroTiposContainer {
+    margin: 1.25rem 0;
+    padding: 1rem 1.25rem;
+    background: var(--branco-quente);
+    border: 1px solid var(--borda);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--sombra);
+}
+
+#filtroTiposContainer h3 {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--texto);
+}
+
+.filtro-tipos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.filtro-tipo-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: 1.5px solid var(--borda);
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: var(--transicao);
+    user-select: none;
+    color: var(--texto-suave);
+}
+
+.filtro-tipo-label:hover {
+    border-color: var(--azul-oceano);
+    color: var(--azul-oceano);
+}
+
+.filtro-tipo-checkbox {
+    cursor: pointer;
+    accent-color: var(--azul-oceano);
+}
+
+.filtro-tipo-label:has(.filtro-tipo-checkbox:checked) {
+    background: var(--azul-oceano);
+    color: #fff;
+    border-color: var(--azul-oceano);
+}
+
+/* Dark mode — Filtros de Gastronomia */
+.darkMode #filtroTiposContainer {
+    background: #1b2535;
+    border-color: rgba(255,255,255,0.10);
+}
+
+.darkMode .filtro-tipo-label {
+    border-color: rgba(255,255,255,0.15);
+    color: var(--texto-suave);
+}
+
+.darkMode .filtro-tipo-label:hover {
+    border-color: var(--azul-ceu);
+    color: var(--azul-ceu);
+}
+
+.darkMode .filtro-tipo-label:has(.filtro-tipo-checkbox:checked) {
+    background: var(--azul-oceano);
+    color: #fff;
+    border-color: var(--azul-oceano);
+}
+
 @media (max-width: 560px) {
     .assistente-ia {
         right: 0.85rem;

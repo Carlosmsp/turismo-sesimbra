@@ -1251,9 +1251,46 @@ function classificarPonto(p) {
 }
 const gastroCard = document.getElementById("gastroCard");
 const inputGastroFiltro = document.getElementById("inputGastroFiltro");
+const filtroTiposContainer = document.getElementById("filtroTipos");
 
 let gastronomiaFiltrada = gastronomiaLista;
+let gastroTiposSelecionados = new Set();
 const versaoImagensGastronomia = "20260524";
+
+// Extrair tipos únicos de restaurantes
+function obterTiposUnicos() {
+    const tipos = [...new Set(gastronomiaLista.map(r => r.tipo))];
+    return tipos.sort();
+}
+
+// Criar botões de filtro por tipo
+function criarFiltrosTipo() {
+    if (!filtroTiposContainer) return;
+    
+    const tipos = obterTiposUnicos();
+    
+    tipos.forEach(tipo => {
+        const label = document.createElement("label");
+        label.classList.add("filtro-tipo-label");
+        
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.value = tipo;
+        checkbox.classList.add("filtro-tipo-checkbox");
+        checkbox.addEventListener("change", (e) => {
+            if (e.target.checked) {
+                gastroTiposSelecionados.add(tipo);
+            } else {
+                gastroTiposSelecionados.delete(tipo);
+            }
+            atualizarGastronomia();
+        });
+        
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(tipo));
+        filtroTiposContainer.appendChild(label);
+    });
+}
 
 if (inputGastroFiltro) {
     inputGastroFiltro.addEventListener("input", atualizarGastronomia);
@@ -1299,11 +1336,18 @@ function criaRestaurante(r) {
 
 function filtrarGastronomia() {
     const filtro = inputGastroFiltro.value.toLowerCase();
-    return gastronomiaLista.filter(r =>
-        r.title.toLowerCase().includes(filtro) ||
-        r.tipo.toLowerCase().includes(filtro) ||
-        r.local.toLowerCase().includes(filtro)
-    );
+    return gastronomiaLista.filter(r => {
+        // Filtro por texto
+        const contemFiltroTexto = 
+            r.title.toLowerCase().includes(filtro) ||
+            r.tipo.toLowerCase().includes(filtro) ||
+            r.local.toLowerCase().includes(filtro);
+        
+        // Filtro por tipo (se há tipos selecionados, filtra; senão, mostra todos)
+        const temTipoSelecionado = gastroTiposSelecionados.size === 0 || gastroTiposSelecionados.has(r.tipo);
+        
+        return contemFiltroTexto && temTipoSelecionado;
+    });
 }
 
 function atualizarGastronomia() {
@@ -1315,7 +1359,10 @@ function atualizarGastronomia() {
     }
 }
 
-if (gastroCard) atualizarGastronomia();
+if (gastroCard) {
+    criarFiltrosTipo();
+    atualizarGastronomia();
+}
 
 function darkModeToggle(){
     document.body.classList.toggle("darkMode");
