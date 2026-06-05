@@ -2132,6 +2132,13 @@ function iniciarModalSugestao() {
     const sugestaoMountTarget = actionsContainer || document.body;
     sugestaoMountTarget.appendChild(botaoFlutuante);
 
+    // Texto de incentivo (corrigido) colocado ANTES do botão, com seta apontando para a direita
+    const sugestaoAjuda = document.createElement("p");
+    sugestaoAjuda.className = "rota-sugestao-texto sugestao-ajuda";
+    sugestaoAjuda.innerHTML = `<sub>Ajude-nos a melhorar o nosso site com as suas sugestões de novas informações</sub>`;
+    // Inserir antes do botão para que a seta (CSS) aponte para a direita em direção ao botão "Sugerir"
+    sugestaoMountTarget.insertBefore(sugestaoAjuda, botaoFlutuante);
+
     function abrirModal() {
         overlay.classList.remove("oculto");
         overlay.querySelector("#sugTipo").focus();
