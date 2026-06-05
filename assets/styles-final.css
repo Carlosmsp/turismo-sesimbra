@@ -1281,6 +1281,12 @@ body.darkMode {
     line-height: 1.4;
 }
 
+/* Estilos da avaliação no cartão de restaurante */
+.rest-title-wrap { display: inline-flex; align-items: center; gap: 0.5rem; }
+.restaurant-rating { display: inline-flex; align-items: center; gap: 0.35rem; background: rgba(0,0,0,0.06); padding: 0.15rem 0.4rem; border-radius: 6px; font-weight: 700; color: var(--texto); font-size: 0.9rem; }
+.restaurant-rating .rating-stars { color: #f5c542; font-size: 0.95rem; }
+.restaurant-rating .rating-num { color: var(--texto-suave); font-weight: 700; font-size: 0.85rem; }
+
 /* Caixa de destaque junto ao botão Sugerir */
 .sugestao-ajuda {
     display: inline-block;

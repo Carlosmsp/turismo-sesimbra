@@ -113,26 +113,26 @@ const pontosTuristicosLista = [
 
 ];
 const gastronomiaLista = [
-    { "id": 1, "title": "Casa Mateus","tipo": "Marisco", "local": "Sesimbra", "image": "img/casa-mateus-sesimbra.jpg", "phone": "+351 963 650 939", "email": "reservas@casamateus.pt" },
-    { "id": 2, "title": "O Zagaia", "tipo": "Peixe", "local": "Sesimbra", "image": "img/Zagaia.jpg", "phone": "+351 966 280 204" },
-    { "id": 3, "title": "Taberna Isaias", "tipo": "Peixe grelhado", "local": "Sesimbra", "image": "img/taberna-do-isaias.jpg", "phone": "+351 914 574 373" },
-    { "id": 4, "title": "O Batel", "tipo": "Marisco", "local": "Sesimbra", "image": "img/o-batel.jpg", "phone": "+351 969 306 556" },
-    { "id": 5, "title": "O Rodinhas", "tipo": "Marisqueira", "local": "Sesimbra", "image": "img/o-rodinhas.jpg", "phone": "+351 212 231 557" },
-    { "id": 6, "title": "Cantinho da Regina", "tipo": "Internacional", "local": "Sesimbra", "image": "img/cantinho-da-regina.jpg", "phone": "+351 212 235 182" },
-    { "id": 7, "title": "O Velho e o Mar", "tipo": "Peixe", "local": "Sesimbra", "image": "img/oVelhoeoMar.jpg", "phone": "+351 21 087 9995" },
-    { "id": 8, "title": "Lobo do Mar", "tipo": "Marisqueira", "local": "Sesimbra", "image": "img/rest8.jpg", "phone": "+351 212 234 567" },
-    { "id": 9, "title": "Portofino", "tipo": "Mediterrânico", "local": "Sesimbra", "image": "img/rest9.jpg", "phone": "+351 212 224 890" },
-    { "id": 10, "title": "Forte de Santiago", "tipo": "Mediterrânico", "local": "Sesimbra", "image": "img/rest10.jpg", "phone": "+351 212 228 340" },
-    { "id": 11, "title": "Casa do Mar", "tipo": "Marisco", "local": "Sesimbra", "image": "img/rest11.jpg", "phone": "+351 212 232 156" },
-    { "id": 12, "title": "O Pescador", "tipo": "Peixe", "local": "Sesimbra", "image": "img/rest12.jpg", "phone": "+351 212 233 478" },
-    { "id": 13, "title": "Marisqueira O Barbas", "tipo": "Marisco", "local": "Sesimbra", "image": "img/rest13.jpg", "phone": "+351 212 225 634" },
-    { "id": 14, "title": "A Tasca do Zé", "tipo": "Peixe grelhado", "local": "Sesimbra", "image": "img/rest14.jpg", "phone": "+351 212 221 345" },
-    { "id": 15, "title": "O Marujo", "tipo": "Marisco", "local": "Sesimbra", "image": "img/rest15.jpg", "phone": "+351 212 226 789" },     
-    { "id": 16, "title": "Costa Nossa", "tipo": "Marisco","local": "Sesimbra","image": "img/rest16.jpg", "phone": "+351 212 229 012" },
-    {"id": 17, "title": "Pizza na Praia Meco", "tipo": "Italiano", "local": "Meco", "image": "img/rest17.jpg", "phone": "+351 212 273 456" },
-    {"id": 18, "title": "Dôma", "tipo": "Tradicional", "local": "Sesimbra", "image": "img/rest18.jpg", "phone": "+351 212 230 567" },
-    {"id": 19, "title": "Praiamar", "tipo": "Marisqueira", "local": "Sesimbra", "image": "img/rest19.jpg", "phone": "+351 212 227 890" },
-    {"id": 20, "title": "Marulla Beach Bar", "tipo": "Moderno", "local": "Sesimbra", "image": "img/rest20.jpg", "phone": "+351 212 235 678" }
+    { "id": 1, "title": "Casa Mateus","tipo": "Marisco", "local": "Sesimbra", "image": "img/casa-mateus-sesimbra.jpg", "phone": "+351 963 650 939", "email": "reservas@casamateus.pt", "rating": 4.7 },
+    { "id": 2, "title": "O Zagaia", "tipo": "Peixe", "local": "Sesimbra", "image": "img/Zagaia.jpg", "phone": "+351 966 280 204", "rating": 4.5 },
+    { "id": 3, "title": "Taberna Isaias", "tipo": "Peixe grelhado", "local": "Sesimbra", "image": "img/taberna-do-isaias.jpg", "phone": "+351 914 574 373", "rating": 4.3 },
+    { "id": 4, "title": "O Batel", "tipo": "Marisco", "local": "Sesimbra", "image": "img/o-batel.jpg", "phone": "+351 969 306 556", "rating": 4.2 },
+    { "id": 5, "title": "O Rodinhas", "tipo": "Marisqueira", "local": "Sesimbra", "image": "img/o-rodinhas.jpg", "phone": "+351 212 231 557", "rating": 4.0 },
+    { "id": 6, "title": "Cantinho da Regina", "tipo": "Internacional", "local": "Sesimbra", "image": "img/cantinho-da-regina.jpg", "phone": "+351 212 235 182", "rating": 4.1 },
+    { "id": 7, "title": "O Velho e o Mar", "tipo": "Peixe", "local": "Sesimbra", "image": "img/oVelhoeoMar.jpg", "phone": "+351 21 087 9995", "rating": 4.6 },
+    { "id": 8, "title": "Lobo do Mar", "tipo": "Marisqueira", "local": "Sesimbra", "image": "img/rest8.jpg", "phone": "+351 212 234 567", "rating": 3.9 },
+    { "id": 9, "title": "Portofino", "tipo": "Mediterrânico", "local": "Sesimbra", "image": "img/rest9.jpg", "phone": "+351 212 224 890", "rating": 4.4 },
+    { "id": 10, "title": "Forte de Santiago", "tipo": "Mediterrânico", "local": "Sesimbra", "image": "img/rest10.jpg", "phone": "+351 212 228 340", "rating": 4.0 },
+    { "id": 11, "title": "Casa do Mar", "tipo": "Marisco", "local": "Sesimbra", "image": "img/rest11.jpg", "phone": "+351 212 232 156", "rating": 4.2 },
+    { "id": 12, "title": "O Pescador", "tipo": "Peixe", "local": "Sesimbra", "image": "img/rest12.jpg", "phone": "+351 212 233 478", "rating": 4.1 },
+    { "id": 13, "title": "Marisqueira O Barbas", "tipo": "Marisco", "local": "Sesimbra", "image": "img/rest13.jpg", "phone": "+351 212 225 634", "rating": 3.8 },
+    { "id": 14, "title": "A Tasca do Zé", "tipo": "Peixe grelhado", "local": "Sesimbra", "image": "img/rest14.jpg", "phone": "+351 212 221 345", "rating": 4.0 },
+    { "id": 15, "title": "O Marujo", "tipo": "Marisco", "local": "Sesimbra", "image": "img/rest15.jpg", "phone": "+351 212 226 789", "rating": 4.3 },     
+    { "id": 16, "title": "Costa Nossa", "tipo": "Marisco","local": "Sesimbra","image": "img/rest16.jpg", "phone": "+351 212 229 012", "rating": 3.9 },
+    {"id": 17, "title": "Pizza na Praia Meco", "tipo": "Italiano", "local": "Meco", "image": "img/rest17.jpg", "phone": "+351 212 273 456", "rating": 4.0 },
+    {"id": 18, "title": "Dôma", "tipo": "Tradicional", "local": "Sesimbra", "image": "img/rest18.jpg", "phone": "+351 212 230 567", "rating": 4.5 },
+    {"id": 19, "title": "Praiamar", "tipo": "Marisqueira", "local": "Sesimbra", "image": "img/rest19.jpg", "phone": "+351 212 227 890", "rating": 3.7 },
+    {"id": 20, "title": "Marulla Beach Bar", "tipo": "Moderno", "local": "Sesimbra", "image": "img/rest20.jpg", "phone": "+351 212 235 678", "rating": 4.1 }
 ];
 const actividadesLista = [
     {
@@ -1332,7 +1332,25 @@ function criaRestaurante(r) {
     const elemArt = document.createElement("article");
 
     const elemH3 = document.createElement("h3");
-    elemH3.textContent = r.title;
+    // Title + rating wrapper
+    const titleWrap = document.createElement("span");
+    titleWrap.className = "rest-title-wrap";
+    titleWrap.textContent = r.title;
+
+    const rating = typeof r.rating === "number" ? r.rating : null;
+    if (rating !== null) {
+        const ratingSpan = document.createElement("span");
+        ratingSpan.className = "restaurant-rating";
+        // star symbol plus numeric value
+        const fullStars = Math.floor(rating);
+        const halfStar = rating - fullStars >= 0.5;
+        let stars = "";
+        for (let i = 0; i < fullStars; i++) stars += "★";
+        if (halfStar) stars += "☆";
+        ratingSpan.innerHTML = `<span class=\"rating-stars\">${stars}</span> <span class=\"rating-num\">${rating.toFixed(1)}</span>`;
+        titleWrap.appendChild(ratingSpan);
+    }
+    elemH3.appendChild(titleWrap);
 
     const elemP = document.createElement("p");
     elemP.textContent = `${r.tipo} • ${r.local}`;
