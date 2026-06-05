@@ -205,6 +205,24 @@ body.dark-botao-fixo #darkModeBotao {
     border-color: rgba(255,255,255,0.35);
     box-shadow: 0 4px 16px rgba(0,0,0,0.22);
 }
+/* Rótulo do botão de dark mode */
+#darkModeLabel {
+    position: absolute;
+    right: 5%;
+    top: calc(1.25rem + 2.2rem);
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.85);
+    background: transparent;
+    text-align: center;
+    pointer-events: none;
+    z-index: 10;
+}
+body.dark-botao-fixo #darkModeLabel {
+    right: 1.25rem;
+    top: calc(0.46rem + 2.2rem);
+    color: #e8e8ea;
+}
+body.darkMode #darkModeLabel { color: var(--branco-quente); }
 body.darkMode.dark-botao-fixo #darkModeBotao {
     background: rgba(7, 15, 28, 0.96);
 }

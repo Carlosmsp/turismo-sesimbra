@@ -1419,9 +1419,27 @@ function atualizarBotaoDarkMode() {
 
     const isDarkMode = document.body.classList.contains("darkMode");
     darkModeBotao.type = "button";
+    // Mostrar ícone de lua no botão (sempre visível)
+    darkModeBotao.textContent = "🌙";
     darkModeBotao.setAttribute("aria-label", isDarkMode ? "Desativar modo escuro" : "Ativar modo escuro");
     darkModeBotao.setAttribute("aria-pressed", String(isDarkMode));
     darkModeBotao.title = isDarkMode ? "Desativar modo escuro" : "Ativar modo escuro";
+
+    // Criar ou atualizar rótulo explicativo sob o botão
+    let label = document.getElementById("darkModeLabel");
+    if (!label) {
+        label = document.createElement("div");
+        label.id = "darkModeLabel";
+        // Inserir o rótulo como irmão do botão dentro do header
+        if (darkModeBotao.parentElement) {
+            darkModeBotao.parentElement.appendChild(label);
+        } else {
+            document.body.appendChild(label);
+        }
+    }
+    label.textContent = isDarkMode ? "Modo Escuro" : "Modo Claro";
+    // Atualizar atributos para acessibilidade
+    label.setAttribute("aria-hidden", "false");
 }
 
 // DEPOIS
