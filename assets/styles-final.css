@@ -327,6 +327,11 @@ main {
 
 section { margin-bottom: 2.5rem; }
 
+/* Reduz espaço entre a barra de sugestão e o título da secção principal */
+main section > h2:first-child {
+    margin-top: 0.5rem;
+}
+
 /* ================================
    CARDS
 ================================ */
