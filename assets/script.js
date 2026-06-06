@@ -1545,7 +1545,10 @@ function iniciarAssistenteIA() {
             <div class="assistente-mensagens" aria-live="polite"></div>
             <form class="assistente-form">
                 <div class="assistente-form-topo">
-                    <label for="assistentePergunta">Faça a sua pergunta</label>
+                    <div class="assistente-form-label">
+                        <label for="assistentePergunta">Faça a sua pergunta</label>
+                        <button type="button" class="assistente-voz" aria-label="Ditar por voz" title="Ditar por voz">🎤</button>
+                    </div>
                     <button type="button" class="assistente-limpar" aria-label="Limpar conversa" title="Limpar conversa">🗑</button>
                 </div>
                 <textarea id="assistentePergunta" name="pergunta" maxlength="700" required placeholder="Ex: Quero visitar o Castelo, Cabo Espichel e almoçar peixe. Faz um plano com tempos e custos."></textarea>
@@ -1567,7 +1570,127 @@ function iniciarAssistenteIA() {
     const form = wrapper.querySelector(".assistente-form");
     const textarea = wrapper.querySelector("textarea");
     const mensagens = wrapper.querySelector(".assistente-mensagens");
-    const botaoEnviar = form.querySelector("button");
+    const botaoEnviar = form.querySelector("button[type='submit']");
+    const botaoVoz   = form.querySelector(".assistente-voz");
+
+    // --- Voz para texto (Web Speech API) ---
+// --- Voz para texto (Web Speech API) ---
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (!SpeechRec) {
+    if (botaoVoz) botaoVoz.style.display = "none";
+} else {
+    const reconhecimento = new SpeechRec();
+    reconhecimento.lang = "pt-PT";
+    reconhecimento.continuous = true;
+    reconhecimento.interimResults = false;
+
+    let textoAntesVoz = "";
+    let aOuvir = false;
+
+    reconhecimento.onstart = () => {
+        aOuvir = true;
+        // Se já houver texto escrito à mão no textarea, adicionamos um espaço no fim
+        textoAntesVoz = textarea.value;
+        if (textoAntesVoz && !textoAntesVoz.endsWith(" ")) {
+            textoAntesVoz += " ";
+        }
+        botaoVoz.classList.add("assistente-voz--ativo");
+        botaoVoz.title = "A ouvir… clique para parar";
+    };
+
+    reconhecimento.onresult = (e) => {
+        // ALTERADO: Vamos construir o texto de toda a sessão atual de voz
+        let textoDitadoDestaVez = "";
+        for (let i = 0; i < e.results.length; i++) {
+            textoDitadoDestaVez += e.results[i][0].transcript;
+        }
+        
+        // ALTERADO: O valor final será o texto que já existia ANTES de ligar o micro, 
+        // mais tudo o que foi ditado nesta sessão atual.
+        textarea.value = textoAntesVoz + textoDitadoDestaVez;
+    };
+
+    reconhecimento.onend = () => {
+        aOuvir = false;
+        botaoVoz.classList.remove("assistente-voz--ativo");
+        botaoVoz.title = "Ditar por voz";
+        textarea.focus();
+    };
+
+    reconhecimento.onerror = (e) => {
+        aOuvir = false;
+        botaoVoz.classList.remove("assistente-voz--ativo");
+        botaoVoz.title = "Ditar por voz";
+        if (e.error === "not-allowed") {
+            alert("Permissão ao microfone negada. Active o acesso nas definições do browser.");
+        }
+    };
+
+    botaoVoz.addEventListener("click", () => {
+        if (aOuvir) {
+            reconhecimento.stop();
+        } else {
+            reconhecimento.start();
+        }
+    });
+}
+// --- fim voz ---
+
+
+
+    /*
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRec) {
+        if (botaoVoz) botaoVoz.style.display = "none";
+    } else {
+        const reconhecimento = new SpeechRec();
+        reconhecimento.lang = "pt-PT";
+        reconhecimento.continuous = true;
+        reconhecimento.interimResults = false;
+
+        let textoAntesVoz = "";
+        let aOuvir = false;
+
+        reconhecimento.onstart = () => {
+            aOuvir = true;
+            textoAntesVoz = textarea.value;
+            botaoVoz.classList.add("assistente-voz--ativo");
+            botaoVoz.title = "A ouvir… clique para parar";
+        };
+
+        reconhecimento.onresult = (e) => {
+            let parcial = "";
+            for (let i = e.resultIndex; i < e.results.length; i++) {
+                parcial += e.results[i][0].transcript;
+            }
+            textarea.value = textoAntesVoz + (textoAntesVoz && parcial ? " " : "") + parcial;
+        };
+
+        reconhecimento.onend = () => {
+            aOuvir = false;
+            botaoVoz.classList.remove("assistente-voz--ativo");
+            botaoVoz.title = "Ditar por voz";
+            textarea.focus();
+        };
+
+        reconhecimento.onerror = (e) => {
+            aOuvir = false;
+            botaoVoz.classList.remove("assistente-voz--ativo");
+            botaoVoz.title = "Ditar por voz";
+            if (e.error === "not-allowed") {
+                alert("Permissão ao microfone negada. Active o acesso nas definições do browser.");
+            }
+        };
+
+        botaoVoz.addEventListener("click", () => {
+            if (aOuvir) {
+                reconhecimento.stop();
+            } else {
+                reconhecimento.start();
+            }
+        });
+    }
+    // --- fim voz ---*/
 
     function obterMensagensGuardadas() {
         return Array.from(mensagens.querySelectorAll(".assistente-msg")).map((msg) => ({
