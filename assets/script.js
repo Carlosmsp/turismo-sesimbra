@@ -1574,96 +1574,32 @@ function iniciarAssistenteIA() {
     const botaoVoz   = form.querySelector(".assistente-voz");
 
     // --- Voz para texto (Web Speech API) ---
-// --- Voz para texto (Web Speech API) ---
-const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-if (!SpeechRec) {
-    if (botaoVoz) botaoVoz.style.display = "none";
-} else {
-    const reconhecimento = new SpeechRec();
-    reconhecimento.lang = "pt-PT";
-    reconhecimento.continuous = true;
-    reconhecimento.interimResults = false;
-
-    let textoAntesVoz = "";
+    let reconhecimento = null;
     let aOuvir = false;
 
-    reconhecimento.onstart = () => {
-        aOuvir = true;
-        // Se já houver texto escrito à mão no textarea, adicionamos um espaço no fim
-        textoAntesVoz = textarea.value;
-        if (textoAntesVoz && !textoAntesVoz.endsWith(" ")) {
-            textoAntesVoz += " ";
-        }
-        botaoVoz.classList.add("assistente-voz--ativo");
-        botaoVoz.title = "A ouvir… clique para parar";
-    };
-
-    reconhecimento.onresult = (e) => {
-        // ALTERADO: Vamos construir o texto de toda a sessão atual de voz
-        let textoDitadoDestaVez = "";
-        for (let i = 0; i < e.results.length; i++) {
-            textoDitadoDestaVez += e.results[i][0].transcript;
-        }
-        
-        // ALTERADO: O valor final será o texto que já existia ANTES de ligar o micro, 
-        // mais tudo o que foi ditado nesta sessão atual.
-        textarea.value = textoAntesVoz + textoDitadoDestaVez;
-    };
-
-    reconhecimento.onend = () => {
-        aOuvir = false;
-        botaoVoz.classList.remove("assistente-voz--ativo");
-        botaoVoz.title = "Ditar por voz";
-        textarea.focus();
-    };
-
-    reconhecimento.onerror = (e) => {
-        aOuvir = false;
-        botaoVoz.classList.remove("assistente-voz--ativo");
-        botaoVoz.title = "Ditar por voz";
-        if (e.error === "not-allowed") {
-            alert("Permissão ao microfone negada. Active o acesso nas definições do browser.");
-        }
-    };
-
-    botaoVoz.addEventListener("click", () => {
-        if (aOuvir) {
-            reconhecimento.stop();
-        } else {
-            reconhecimento.start();
-        }
-    });
-}
-// --- fim voz ---
-
-
-
-    /*
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRec) {
         if (botaoVoz) botaoVoz.style.display = "none";
     } else {
-        const reconhecimento = new SpeechRec();
+        reconhecimento = new SpeechRec();
         reconhecimento.lang = "pt-PT";
         reconhecimento.continuous = true;
         reconhecimento.interimResults = false;
 
         let textoAntesVoz = "";
-        let aOuvir = false;
 
         reconhecimento.onstart = () => {
             aOuvir = true;
             textoAntesVoz = textarea.value;
+            if (textoAntesVoz && !textoAntesVoz.endsWith(" ")) textoAntesVoz += " ";
             botaoVoz.classList.add("assistente-voz--ativo");
             botaoVoz.title = "A ouvir… clique para parar";
         };
 
         reconhecimento.onresult = (e) => {
-            let parcial = "";
-            for (let i = e.resultIndex; i < e.results.length; i++) {
-                parcial += e.results[i][0].transcript;
-            }
-            textarea.value = textoAntesVoz + (textoAntesVoz && parcial ? " " : "") + parcial;
+            let ditado = "";
+            for (let i = 0; i < e.results.length; i++) ditado += e.results[i][0].transcript;
+            textarea.value = textoAntesVoz + ditado;
         };
 
         reconhecimento.onend = () => {
@@ -1677,20 +1613,16 @@ if (!SpeechRec) {
             aOuvir = false;
             botaoVoz.classList.remove("assistente-voz--ativo");
             botaoVoz.title = "Ditar por voz";
-            if (e.error === "not-allowed") {
+            if (e.error === "not-allowed")
                 alert("Permissão ao microfone negada. Active o acesso nas definições do browser.");
-            }
         };
 
         botaoVoz.addEventListener("click", () => {
-            if (aOuvir) {
-                reconhecimento.stop();
-            } else {
-                reconhecimento.start();
-            }
+            if (aOuvir) reconhecimento.stop();
+            else reconhecimento.start();
         });
     }
-    // --- fim voz ---*/
+    // --- fim voz ---
 
     function obterMensagensGuardadas() {
         return Array.from(mensagens.querySelectorAll(".assistente-msg")).map((msg) => ({
@@ -1820,6 +1752,8 @@ if (!SpeechRec) {
 
     form.addEventListener("submit", async function (event) {
         event.preventDefault();
+
+        if (aOuvir) reconhecimento && reconhecimento.stop();
 
         const pergunta = textarea.value.trim();
         if (!pergunta) return;
