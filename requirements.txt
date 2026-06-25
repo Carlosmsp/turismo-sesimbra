@@ -1,4 +1,2 @@
 Flask>=3.0
-openpyxl>=3.1
-Pillow>=11.0
-playwright>=1.60
+gunicorn>=21.0

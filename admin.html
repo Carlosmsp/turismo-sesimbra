@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Sesimbra</title>
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <link rel="stylesheet" href="assets/styles-final.css">
+    <style>
+        body { background: #f4f7fb; color: #0f2342; }
+        main { width: min(1180px, calc(100% - 2rem)); margin: 2rem auto; }
+        header { min-height: auto; padding: 2rem 5%; }
+        .admin-grid { display: grid; gap: 1.5rem; }
+        .admin-panel { background: #fff; border: 1px solid #dfe7ef; border-radius: 8px; padding: 1rem; box-shadow: 0 10px 24px rgba(15,35,66,0.08); }
+        .admin-panel h2 { margin-top: 0; }
+        .admin-status { margin-bottom: 1rem; font-weight: 700; }
+        .admin-table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+        th, td { padding: 0.65rem; border-bottom: 1px solid #e7edf4; text-align: left; vertical-align: top; }
+        th { background: #edf5fb; color: #0f2342; }
+        td pre { white-space: pre-wrap; margin: 0; font-family: inherit; max-width: 38rem; }
+        .admin-empty { color: #64748b; margin: 0.5rem 0 0; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Admin - Sesimbra</h1>
+        <p>Área técnica para consultar contactos e logs da API.</p>
+    </header>
+
+    <main>
+        <p id="adminStatus" class="admin-status">A carregar dados...</p>
+        <div class="admin-grid">
+            <section class="admin-panel">
+                <h2>Contactos</h2>
+                <div id="contactosTabela" class="admin-table-wrap"></div>
+            </section>
+
+            <section class="admin-panel">
+                <h2>Logs da IA</h2>
+                <div id="logsTabela" class="admin-table-wrap"></div>
+            </section>
+
+            <section class="admin-panel">
+                <h2 id="sugestoesTitulo">Sugestões — Histórico</h2>
+                <div style="margin-bottom:0.75rem;display:flex;gap:0.4rem;flex-wrap:wrap;">
+                    <button class="filtro-sug filtro-ativo" data-estado="todos">Todas</button>
+                    <button class="filtro-sug" data-estado="pendente">Pendentes</button>
+                    <button class="filtro-sug" data-estado="aprovado">Aprovadas</button>
+                    <button class="filtro-sug" data-estado="rejeitado">Rejeitadas</button>
+                </div>
+                <div id="sugestoesTabela" class="admin-table-wrap"></div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Modal para Editar Sugestão -->
+    <div id="modalEditarSugestao" class="modal-overlay oculto">
+        <div class="modal-conteudo">
+            <button class="modal-fechar" aria-label="Fechar">&times;</button>
+            <h2>Editar Sugestão</h2>
+            <form id="formEditarSugestao" novalidate>
+                <input type="hidden" id="editId" name="id">
+                <label>Tipo: <span id="editTipo"></span></label>
+                <label for="editNome">Nome</label>
+                <input type="text" id="editNome" name="nome" required>
+                <label for="editDesc">Descrição</label>
+                <textarea id="editDesc" name="descricao" rows="3" required></textarea>
+                <label for="editLocal">Localização</label>
+                <input type="text" id="editLocal" name="localizacao">
+                <label for="editTel">Telefone</label>
+                <input type="tel" id="editTel" name="telefone">
+                <label for="editWeb">Site</label>
+                <input type="url" id="editWeb" name="website">
+                <label for="editBooking">Booking</label>
+                <input type="url" id="editBooking" name="website_booking">
+                <label for="editAlerta">Alerta/Aviso</label>
+                <input type="text" id="editAlerta" name="alerta">
+                <div id="editResp" class="edit-resposta"></div>
+                <button type="submit" class="btn-enviar">Guardar alterações</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Responder Contacto -->
+    <div id="modalResponderContacto" class="modal-overlay oculto">
+        <div class="modal-conteudo">
+            <button class="modal-fechar" aria-label="Fechar">&times;</button>
+            <h2>Responder Contacto</h2>
+            <form id="formResponderContacto" novalidate>
+                <input type="hidden" id="respContactoId" name="id">
+                <label>Para: <span id="respPara"></span></label>
+                <label>Email: <span id="respEmail"></span></label>
+                <label for="respAssunto">Assunto</label>
+                <input type="text" id="respAssunto" name="assunto" required>
+                <label for="respMensagem">Mensagem</label>
+                <textarea id="respMensagem" name="mensagem" rows="5" required></textarea>
+                <div id="respResp" class="resp-resposta"></div>
+                <button type="submit" class="btn-enviar">Enviar resposta</button>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        .btn-aprovar, .btn-rejeitar, .btn-editar, .btn-responder {
+            padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.78rem;
+            font-weight: 600; cursor: pointer; border: none; margin: 0.1rem;
+        }
+        .btn-aprovar { background: #1a7a3a; color: #fff; }
+        .btn-aprovar:hover { background: #145f2c; }
+        .btn-rejeitar { background: #b00020; color: #fff; }
+        .btn-rejeitar:hover { background: #8a0018; }
+        .btn-editar { background: #0066cc; color: #fff; }
+        .btn-editar:hover { background: #0052a3; }
+        .btn-responder { background: #ff9800; color: #fff; }
+        .btn-responder:hover { background: #e68900; }
+        .acao-col { white-space: nowrap; }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-overlay.oculto { display: none; }
+        .modal-conteudo { background: #fff; border-radius: 8px; padding: 2rem; width: min(600px, calc(100% - 2rem)); max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); position: relative; }
+        .modal-fechar { position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666; }
+        .modal-fechar:hover { color: #000; }
+        .modal-conteudo h2 { margin-top: 0; margin-bottom: 1.5rem; }
+        .modal-conteudo label { display: block; margin-top: 1rem; font-weight: 600; color: #0f2342; }
+        .modal-conteudo input, .modal-conteudo textarea { width: 100%; padding: 0.6rem; margin-top: 0.3rem; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; }
+        .modal-conteudo input:focus, .modal-conteudo textarea:focus { outline: none; border-color: #0066cc; box-shadow: 0 0 4px rgba(0,102,204,0.3); }
+        .btn-enviar { margin-top: 1.5rem; padding: 0.75rem 1.5rem; background: #0066cc; color: #fff; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; width: 100%; }
+        .btn-enviar:hover { background: #0052a3; }
+        .btn-enviar:disabled { background: #ccc; cursor: not-allowed; }
+        .edit-resposta, .resp-resposta { margin-top: 1rem; padding: 0.75rem; border-radius: 4px; display: none; }
+        .edit-resposta.erro, .resp-resposta.erro { background: #fee; color: #c00; display: block; }
+        .edit-resposta.sucesso, .resp-resposta.sucesso { background: #efe; color: #060; display: block; }
+    </style>
+
+    <style>
+        .filtro-sug { padding:0.25rem 0.7rem; border-radius:20px; border:1.5px solid #0f2342; background:#fff; color:#0f2342; font-size:0.8rem; font-weight:600; cursor:pointer; }
+        .filtro-sug.filtro-ativo { background:#0f2342; color:#fff; }
+        .badge-pendente { color:#b45309; font-weight:700; }
+        .badge-aprovado { color:#1a7a3a; font-weight:700; }
+        .badge-rejeitado { color:#b00020; font-weight:700; }
+    </style>
+
+    <script>
+        (function () {
+            const token = new URLSearchParams(window.location.search).get("token") || "";
+            const statusEl = document.getElementById("adminStatus");
+            const contactosTabela = document.getElementById("contactosTabela");
+            const logsTabela = document.getElementById("logsTabela");
+            const sugestoesTabela = document.getElementById("sugestoesTabela");
+
+            let todasSugestoes = [];
+            let filtroAtivo = "todos";
+
+            function texto(valor) {
+                return String(valor ?? "")
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+
+            /* ── CONTACTOS ─────────────────────────────────── */
+            function tabelaContactos(contactos) {
+                if (!contactos.length) return '<p class="admin-empty">Ainda não há contactos guardados.</p>';
+                return `<table>
+                    <thead><tr><th>ID</th><th>Nome</th><th>Email</th><th>Telefone</th><th>Mensagem</th><th>Data</th><th>Estado</th><th>Resposta enviada</th><th>Ação</th></tr></thead>
+                    <tbody>${contactos.map(c => `
+                        <tr id="cont-${texto(c.id)}" ${c.respondido ? 'style="background:#f0fff4"' : ''}>
+                            <td>${texto(c.id)}</td>
+                            <td>${texto(c.nome)}</td>
+                            <td>${texto(c.email)}</td>
+                            <td>${texto(c.telefone || "-")}</td>
+                            <td><pre>${texto(c.mensagem)}</pre></td>
+                            <td>${texto(c.criado_em)}</td>
+                            <td>${c.respondido
+                                ? '<span class="badge-aprovado">✓ Respondido</span>'
+                                : '<span class="badge-pendente">● Pendente</span>'}</td>
+                            <td>${c.resp_mensagem
+                                ? `<strong>${texto(c.resp_assunto)}</strong><br><pre style="max-width:22rem">${texto(c.resp_mensagem)}</pre><small style="color:#64748b">${texto(c.resp_em||"")}</small>`
+                                : '<span style="color:#aaa">—</span>'}</td>
+                            <td><button class="btn-responder" data-id="${texto(c.id)}" data-nome="${texto(c.nome)}" data-email="${texto(c.email)}">${c.respondido ? '↩ Responder de novo' : '💬 Responder'}</button></td>
+                        </tr>`).join("")}
+                    </tbody></table>`;
+            }
+
+            /* ── LOGS ──────────────────────────────────────── */
+            function tabelaLogs(logs) {
+                if (!logs.length) return '<p class="admin-empty">Ainda não há logs guardados.</p>';
+                return `<table>
+                    <thead><tr><th>ID</th><th>Data</th><th>Endpoint</th><th>Estado</th><th>Resposta</th></tr></thead>
+                    <tbody>${logs.map(l => `
+                        <tr>
+                            <td>${texto(l.id)}</td>
+                            <td>${texto(l.created_at)}</td>
+                            <td>${texto(l.endpoint)}</td>
+                            <td>${texto(l.estado)}</td>
+                            <td><pre>${texto(l.resposta_text || "")}</pre></td>
+                        </tr>`).join("")}
+                    </tbody></table>`;
+            }
+
+            /* ── SUGESTÕES ─────────────────────────────────── */
+            const TIPO_LABEL = { ponto:"Ponto Turístico", atividade:"Atividade", gastronomia:"Gastronomia", alojamento:"Alojamento" };
+            const ESTADO_BADGE = { pendente:'<span class="badge-pendente">● Pendente</span>', aprovado:'<span class="badge-aprovado">✓ Aprovado</span>', rejeitado:'<span class="badge-rejeitado">✗ Rejeitado</span>' };
+
+            function fotosSugestao(imagens_json) {
+                try {
+                    const imgs = JSON.parse(imagens_json || "[]");
+                    if (!imgs.length) return '<span style="color:#aaa">sem foto</span>';
+                    return imgs.map(src => `<img src="${src}" style="max-width:80px;max-height:60px;border-radius:4px;object-fit:cover;margin:1px;cursor:pointer" onclick="window.open('${src}','_blank')">`).join("");
+                } catch { return '<span style="color:#aaa">sem foto</span>'; }
+            }
+
+            function tabelaSugestoes(lista) {
+                if (!lista.length) return '<p class="admin-empty">Nenhuma sugestão encontrada.</p>';
+                return `<table>
+                    <thead><tr><th>ID</th><th>Estado</th><th>Tipo</th><th>Nome</th><th>Fotos</th><th>Descrição</th><th>Localização</th><th>Telefone</th><th>Site</th><th>Booking</th><th>Categoria/Alerta</th><th>Email</th><th>Data</th><th>Ação</th></tr></thead>
+                    <tbody>${lista.map(s => `
+                        <tr id="sug-${texto(s.id)}" ${s.estado==='aprovado' ? 'style="background:#f0fff4"' : s.estado==='rejeitado' ? 'style="background:#fff5f5"' : ''}>
+                            <td>${texto(s.id)}</td>
+                            <td>${ESTADO_BADGE[s.estado] || texto(s.estado)}</td>
+                            <td>${texto(TIPO_LABEL[s.tipo] || s.tipo)}</td>
+                            <td><strong>${texto(s.nome)}</strong></td>
+                            <td>${fotosSugestao(s.imagens)}</td>
+                            <td><pre>${texto(s.descricao)}</pre></td>
+                            <td>${texto(s.localizacao || "-")}</td>
+                            <td>${texto(s.telefone || "-")}</td>
+                            <td>${s.website ? `<a href="${texto(s.website)}" target="_blank">link</a>` : "-"}</td>
+                            <td>${s.website_booking ? `<a href="${texto(s.website_booking)}" target="_blank">booking</a>` : "-"}</td>
+                            <td>${texto(s.categoria_atividade || s.alerta || "-")}</td>
+                            <td>${texto(s.email_sugestor || "-")}</td>
+                            <td>${texto(s.criado_em)}</td>
+                            <td class="acao-col">
+                                <button class="btn-editar" data-id="${texto(s.id)}" data-tipo="${texto(s.tipo)}"
+                                    data-nome="${texto(s.nome)}" data-desc="${texto(s.descricao)}"
+                                    data-local="${texto(s.localizacao||"")}" data-tel="${texto(s.telefone||"")}"
+                                    data-web="${texto(s.website||"")}" data-booking="${texto(s.website_booking||"")}"
+                                    data-alerta="${texto(s.alerta||"")}">✏️ Editar</button>
+                                ${s.estado === 'pendente' ? `
+                                <button class="btn-aprovar" data-id="${texto(s.id)}">✓ Aprovar</button>
+                                <button class="btn-rejeitar" data-id="${texto(s.id)}">✗ Rejeitar</button>` : ''}
+                            </td>
+                        </tr>`).join("")}
+                    </tbody></table>`;
+            }
+
+            function renderSugestoes() {
+                const lista = filtroAtivo === "todos" ? todasSugestoes : todasSugestoes.filter(s => s.estado === filtroAtivo);
+                sugestoesTabela.innerHTML = tabelaSugestoes(lista);
+                const pendentes = todasSugestoes.filter(s => s.estado === "pendente").length;
+                document.getElementById("sugestoesTitulo").textContent =
+                    `Sugestões — Histórico${pendentes ? ` (${pendentes} pendentes)` : ""}`;
+            }
+
+            /* ── AÇÕES ─────────────────────────────────────── */
+            async function mudarEstadoSugestao(id, estado) {
+                const res = await fetch(`/api/admin/sugestoes/${id}/estado?token=${encodeURIComponent(token)}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "X-Admin-Token": token },
+                    body: JSON.stringify({ estado })
+                });
+                if (res.ok) {
+                    const sug = todasSugestoes.find(s => String(s.id) === String(id));
+                    if (sug) sug.estado = estado;
+                    renderSugestoes();
+                } else {
+                    const erro = await res.json().catch(() => ({}));
+                    alert("Erro: " + (erro.erro || "Não foi possível atualizar."));
+                }
+            }
+
+            function abrirEditarSugestao(btn) {
+                document.getElementById("editId").value = btn.dataset.id;
+                document.getElementById("editTipo").textContent = TIPO_LABEL[btn.dataset.tipo] || btn.dataset.tipo;
+                document.getElementById("editNome").value = btn.dataset.nome || "";
+                document.getElementById("editDesc").value = btn.dataset.desc || "";
+                document.getElementById("editLocal").value = btn.dataset.local || "";
+                document.getElementById("editTel").value = btn.dataset.tel || "";
+                document.getElementById("editWeb").value = btn.dataset.web || "";
+                document.getElementById("editBooking").value = btn.dataset.booking || "";
+                document.getElementById("editAlerta").value = btn.dataset.alerta || "";
+                document.getElementById("editResp").className = "edit-resposta";
+                document.getElementById("editResp").textContent = "";
+                document.getElementById("modalEditarSugestao").classList.remove("oculto");
+            }
+
+            function abrirResponderContacto(btn) {
+                document.getElementById("respContactoId").value = btn.dataset.id;
+                document.getElementById("respPara").textContent = btn.dataset.nome;
+                document.getElementById("respEmail").textContent = btn.dataset.email;
+                document.getElementById("respAssunto").value = "";
+                document.getElementById("respMensagem").value = "";
+                document.getElementById("respResp").className = "resp-resposta";
+                document.getElementById("respResp").textContent = "";
+                document.getElementById("modalResponderContacto").classList.remove("oculto");
+            }
+
+            async function enviarResposta() {
+                const id = document.getElementById("respContactoId").value;
+                const assunto = document.getElementById("respAssunto").value.trim();
+                const mensagem = document.getElementById("respMensagem").value.trim();
+                const respDiv = document.getElementById("respResp");
+                if (!assunto || !mensagem) { respDiv.className = "resp-resposta erro"; respDiv.textContent = "Preenche assunto e mensagem."; return; }
+                const btn = document.querySelector("#formResponderContacto button[type=submit]");
+                btn.disabled = true; btn.textContent = "A enviar...";
+                try {
+                    const res = await fetch(`/api/admin/contactos/${id}/responder?token=${encodeURIComponent(token)}`, {
+                        method: "POST", headers: { "Content-Type": "application/json", "X-Admin-Token": token },
+                        body: JSON.stringify({ assunto, mensagem })
+                    });
+                    const dados = await res.json();
+                    if (res.ok) {
+                        respDiv.className = "resp-resposta sucesso";
+                        respDiv.textContent = "✓ " + (dados.mensagem || "Resposta guardada!");
+                        setTimeout(() => { document.getElementById("modalResponderContacto").classList.add("oculto"); carregar(); }, 2000);
+                    } else { respDiv.className = "resp-resposta erro"; respDiv.textContent = "Erro: " + (dados.erro || "Não foi possível enviar."); }
+                } catch (e) { respDiv.className = "resp-resposta erro"; respDiv.textContent = "Erro de conexão: " + e.message; }
+                finally { btn.disabled = false; btn.textContent = "Enviar resposta"; }
+            }
+
+            async function enviarEdicao() {
+                const id = document.getElementById("editId").value;
+                const nome = document.getElementById("editNome").value.trim();
+                const descricao = document.getElementById("editDesc").value.trim();
+                const respDiv = document.getElementById("editResp");
+                if (!nome || !descricao) { respDiv.className = "edit-resposta erro"; respDiv.textContent = "Preenche nome e descrição."; return; }
+                const btn = document.querySelector("#formEditarSugestao button[type=submit]");
+                btn.disabled = true; btn.textContent = "A guardar...";
+                try {
+                    const res = await fetch(`/api/admin/sugestoes/${id}?token=${encodeURIComponent(token)}`, {
+                        method: "POST", headers: { "Content-Type": "application/json", "X-Admin-Token": token },
+                        body: JSON.stringify({ nome, descricao,
+                            localizacao: document.getElementById("editLocal").value.trim(),
+                            telefone: document.getElementById("editTel").value.trim(),
+                            website: document.getElementById("editWeb").value.trim(),
+                            website_booking: document.getElementById("editBooking").value.trim(),
+                            alerta: document.getElementById("editAlerta").value.trim() })
+                    });
+                    const dados = await res.json();
+                    if (res.ok) {
+                        respDiv.className = "edit-resposta sucesso"; respDiv.textContent = "✓ Alterações guardadas!";
+                        setTimeout(() => { document.getElementById("modalEditarSugestao").classList.add("oculto"); carregar(); }, 1500);
+                    } else { respDiv.className = "edit-resposta erro"; respDiv.textContent = "Erro: " + (dados.erro || "Não foi possível guardar."); }
+                } catch (e) { respDiv.className = "edit-resposta erro"; respDiv.textContent = "Erro de conexão: " + e.message; }
+                finally { btn.disabled = false; btn.textContent = "Guardar alterações"; }
+            }
+
+            /* ── CARREGAR ──────────────────────────────────── */
+            async function carregar() {
+                if (!token) { statusEl.textContent = "Token em falta no URL (?token=...)."; return; }
+
+                statusEl.textContent = "A carregar dados...";
+
+                const [cRes, lRes, sRes] = await Promise.all([
+                    fetch(`/api/admin/contactos?token=${encodeURIComponent(token)}`),
+                    fetch(`/api/logs?token=${encodeURIComponent(token)}`),
+                    fetch(`/api/admin/sugestoes/todas?token=${encodeURIComponent(token)}`)
+                ]);
+
+                if (cRes.status === 401 || lRes.status === 401) {
+                    statusEl.textContent = "Acesso não autorizado — verifique o token no URL.";
+                    return;
+                }
+
+                if (cRes.ok) contactosTabela.innerHTML = tabelaContactos(await cRes.json());
+                else contactosTabela.innerHTML = `<p class="admin-empty">Erro ao carregar contactos (${cRes.status}).</p>`;
+
+                if (lRes.ok) logsTabela.innerHTML = tabelaLogs(await lRes.json());
+                else logsTabela.innerHTML = `<p class="admin-empty">Erro ao carregar logs (${lRes.status}).</p>`;
+
+                todasSugestoes = sRes.ok ? await sRes.json() : [];
+                renderSugestoes();
+
+                statusEl.textContent = "Dados carregados com sucesso.";
+            }
+
+            /* ── EVENT LISTENERS (uma só vez) ──────────────── */
+            document.querySelectorAll(".modal-fechar").forEach(b => b.addEventListener("click", function () {
+                this.closest(".modal-overlay").classList.add("oculto");
+            }));
+            document.querySelectorAll(".modal-overlay").forEach(m => m.addEventListener("click", function (e) {
+                if (e.target === this) this.classList.add("oculto");
+            }));
+            document.getElementById("formEditarSugestao").addEventListener("submit", e => { e.preventDefault(); enviarEdicao(); });
+            document.getElementById("formResponderContacto").addEventListener("submit", e => { e.preventDefault(); enviarResposta(); });
+
+            sugestoesTabela.addEventListener("click", function (e) {
+                const btn = e.target.closest("[data-id]");
+                if (!btn) return;
+                const id = btn.dataset.id;
+                if (btn.classList.contains("btn-aprovar")) mudarEstadoSugestao(id, "aprovado");
+                else if (btn.classList.contains("btn-rejeitar")) mudarEstadoSugestao(id, "rejeitado");
+                else if (btn.classList.contains("btn-editar")) abrirEditarSugestao(btn);
+            });
+
+            contactosTabela.addEventListener("click", function (e) {
+                const btn = e.target.closest(".btn-responder");
+                if (btn) abrirResponderContacto(btn);
+            });
+
+            document.querySelectorAll(".filtro-sug").forEach(b => b.addEventListener("click", function () {
+                document.querySelectorAll(".filtro-sug").forEach(x => x.classList.remove("filtro-ativo"));
+                this.classList.add("filtro-ativo");
+                filtroAtivo = this.dataset.estado;
+                renderSugestoes();
+            }));
+
+            carregar().catch(() => { statusEl.textContent = "Não foi possível carregar os dados."; });
+        }());
+    </script>
+</body>
+</html>
